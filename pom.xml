@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<groupId>edu.swmed.qbrc</groupId>
+	<artifactId>cashmac</artifactId>
+	<packaging>pom</packaging>
+	<version>1.0.0-SNAPSHOT</version>
+	<name>CasHmac Library</name>
+	<url>http://maven.apache.org</url>
+
+	<modules>
+		<module>cashmac-server</module>
+		<module>cashmac-client</module>
+		<module>cashmac-shared</module>
+  </modules>
+
+	<properties>
+		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
+		<maven-deploy-plugin.version>2.7</maven-deploy-plugin.version>
+		<spring.version>3.0.5.RELEASE</spring.version>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>JBoss repository</id>
+			<url>https://maven.nuxeo.org/nexus/content/groups/public/</url>
+		</repository>
+	</repositories>
+
+	<profiles>
+		<profile>
+			<id>non-deployment</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+			    <plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>${maven-deploy-plugin.version}</version>
+					<configuration>
+						<skip>true</skip>
+					</configuration>
+			    	</plugin>
+			    </plugins>
+
+			</build>
+		</profile>
+
+		<profile>
+			<id>deployment</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-deploy-plugin</artifactId>
+						<version>2.7</version>
+						<configuration>
+							<skip>false</skip>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>		
+
+  <distributionManagement>
+    <repository>
+       <id>deployment</id>
+       <name>Internal Releases</name>
+       <url>http://qbri.swmed.edu/nexus/content/repositories/releases/</url>
+    </repository>
+    <snapshotRepository>
+       <id>deployment</id>
+       <name>Internal Releases</name>
+       <url>http://qbri.swmed.edu/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+</project>

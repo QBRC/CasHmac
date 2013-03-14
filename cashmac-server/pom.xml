@@ -1,0 +1,139 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<groupId>edu.swmed.qbrc.auth.cashmac</groupId>
+	<artifactId>cashmac-server</artifactId>
+	<packaging>jar</packaging>
+	<version>1.0.0-SNAPSHOT</version>
+	<name>CasHmac Server Library</name>
+	<url>http://maven.apache.org</url>
+
+	<parent>
+		<groupId>edu.swmed.qbrc</groupId>
+		<artifactId>cashmac</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<project.deployment.encoding>UTF-8</project.deployment.encoding>
+		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
+	    <cas.version>3.2.1</cas.version>
+		<guice.version>3.0</guice.version>
+		<junit.version>4.10</junit.version>
+	</properties>
+
+	<repositories>
+	
+		<repository>
+			<id>sonatype.snapshots</id>
+			<name>Sonatype snapshot repository</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+
+	</repositories>
+
+	<dependencies>
+
+		<!-- JDBC database connection pooling -->
+		<dependency>
+			<groupId>commons-dbcp</groupId>
+			<artifactId>commons-dbcp</artifactId>
+			<version>1.4</version>
+		</dependency>
+		
+        <dependency>
+                <groupId>edu.swmed.qbrc.auth.cashmac</groupId>
+                <artifactId>cashmac-shared</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        
+        <!-- Depends upon servlet API, since this library will run in the context of a servlet container -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.3</version>
+		</dependency>
+
+		<!-- Jasig CAS Client -->
+		<dependency>
+		   <groupId>org.jasig.cas.client</groupId>
+		   <artifactId>cas-client-core</artifactId>
+		   <type>jar</type>
+		   <version>${cas.version}</version>
+		</dependency>	
+
+		<!-- JUnit testing framework -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!--  JBoss RESTEasy -->
+		<dependency>
+		      <groupId>org.jboss.resteasy</groupId>
+		      <artifactId>resteasy-jaxrs</artifactId>
+		      <version>2.3.5.Final</version>
+		</dependency>
+
+		<!-- DI dependencies -->
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>${guice.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-servlet</artifactId>
+			<version>${guice.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-assistedinject</artifactId>
+			<version>${guice.version}</version>
+		</dependency>
+	
+
+	</dependencies>
+
+	<build>
+
+		<resources>
+	        <resource>
+                <directory>${basedir}/src/main/resources</directory>
+	        </resource>
+		</resources>
+
+        <testResources>
+	        <testResource>
+	            <directory>${basedir}/src/test/resources</directory>
+			</testResource>
+        </testResources>
+		
+		<plugins>
+			<plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+			   <artifactId>maven-compiler-plugin</artifactId>
+               <version>${maven-compiler-plugin.version}</version>
+               <configuration>
+	               <source>${target.jdk}</source>
+	               <target>${target.jdk}</target>
+	               <encoding>${project.build.sourceEncoding}</encoding>
+	               <!-- Disable annotation processors during normal compilation -->
+	               <proc>none</proc>
+                </configuration>
+			</plugin>	
+		</plugins>
+
+	</build>
+
+	
+</project>
