@@ -185,3 +185,165 @@ Secure your clients (consumers of the RESTful service) with the CasHmac-client l
       User user = messageRestService.get("thomas");
     	out.append(user.toString()).append("\n");
       ```
+      
+HMAC Specifications
+====================
+If you wish to access a RESTful service protected by CasHmac from a client that doesn't support Java, or if you simply wish to write your own client-side implementation of HMAC, here is the specification you'll need:
+
+Request Headers
+---------------
+
+- Include the current date in milliseconds (UTC) in a request header named "Date". We get this value as follows: ``String currentDate = Long.toString(System.currentTimeMillis());`` Be sure that your client and server times are reasonably in sync. By default, cashmac-server enforces a maximum difference of 5 minutes between the client and server.
+- Include your client ID (user name) in a request header named "ClientId".  Be sure NOT to include your client secret!!
+- Include an HMAC in a request header named "Signature".  See below for information on generating the HMAC.
+
+HMAC Signature
+--------------
+
+- Start the string with the http method (probably GET), followed by a new line ("\n").
+- Append the host header in lower case, followed by a new line.
+- Append the request URI, followed by a new line. (the URL minus any query string parameters)
+- Append the date in milliseconds (UTC), followed by a new line.  This date must exactly match the one included in the "Date" request header.
+- Append a sorted list of query string name=value pairs, each pair separated with "&".
+- Encode the entire string with the HMAC-SHA1 algorithm.
+- Convert the string to Base 64.
+
+HMAC Signature Creation Example
+-------------------------------
+
+Below is the Java code (taken from cashmac-client) used to add the necessary HTTP headers, along with creating a valid HMAC, to an HTTP Request to a RESTful service protected by CasHmac.
+
+```java
+/**
+ * Creates the signature to be passed to the HMAC function.
+ * @param request
+ * @param date
+ * @return
+ * @throws Exception
+ */
+public static String createSignature(HttpRequest request, String date) throws Exception {
+	StringBuilder s = new StringBuilder();
+	
+	// HTTP Verb
+	s.append(request.getHttpMethod()).append("\n");
+	
+	// Host header
+	String host = request.getHttpHeaders().getRequestHeaders().getFirst("HOST");
+	if (host == null) {
+		host = "/";
+	}
+	s.append(host.toLowerCase()).append("\n");
+	
+	// URI
+	s.append(request.getUri().getAbsolutePath().toASCIIString()).append("\n");
+
+	// Date
+	s.append(date).append("\n");
+
+	// Query String
+	s.append(buildSortedQueryString(request));
+
+	// Return value
+	return s.toString();
+}
+
+/**
+ * Sorts the query string and form parameters, URL encodes them, and joins them in
+ * '&' delimited, '=' separated name/value pairs.
+ * @param request
+ * @return
+ * @throws URISyntaxException
+ */
+private static String buildSortedQueryString(ClientRequest request) throws URISyntaxException {
+	StringBuilder s = new StringBuilder();
+	
+	// Get a single map of all form and query string parameters
+	MultivaluedMap<String, String> combinedMap = request.getFormParameters();
+	combinedMap.putAll(request.getQueryParameters());
+	
+	// Sort by adding all items to a TreeMap
+	TreeMap<String, String> sortedMap = new TreeMap<String, String>();
+	Iterator<String> it = combinedMap.keySet().iterator();
+	while (it.hasNext()) { // Loop through keys
+		String key = it.next();
+		sortedMap.put(encode(key), encode(combinedMap.getFirst(key)));
+	}
+	
+	// Create name=value pairs.
+	for (String key : sortedMap.keySet()) {
+		s.append((s.length() > 0) ? "&" : "").append(key).append("=").append(sortedMap.get(key));
+	}
+	
+	return s.toString();
+}
+
+/**
+ * Sorts the query string and form parameters, URL encodes them, and joins them in
+ * '&' delimited, '=' separated name/value pairs.
+ * @param request
+ * @return
+ * @throws URISyntaxException
+ */
+private static String buildSortedQueryString(HttpRequest request) throws URISyntaxException {
+	StringBuilder s = new StringBuilder();
+	
+	// Get a single map of all form and query string parameters
+	MultivaluedMap<String, String> combinedMap = request.getFormParameters();
+	combinedMap.putAll(request.getUri().getQueryParameters());
+	
+	// Sort by adding all items to a TreeMap
+	TreeMap<String, String> sortedMap = new TreeMap<String, String>();
+	Iterator<String> it = combinedMap.keySet().iterator();
+	while (it.hasNext()) { // Loop through keys
+		String key = it.next();
+		sortedMap.put(encode(key), encode(combinedMap.getFirst(key)));
+	}
+	
+	// Create name=value pairs.
+	for (String key : sortedMap.keySet()) {
+		s.append((s.length() > 0) ? "&" : "").append(key).append("=").append(sortedMap.get(key));
+	}
+	
+	return s.toString();
+}	
+
+/**
+ * URL encoding for a string
+ * @param string
+ * @return
+ * @throws URISyntaxException
+ */
+private static String encode(String string) throws URISyntaxException {
+	URI uri = new URI(null, string, null);
+	return uri.toASCIIString();
+}
+
+
+/**
+ * Computes RFC 2104-compliant HMAC signature.
+ * @param data
+ * The data to be signed.
+ * @param key
+ * The signing key.
+ * @return
+ * The Base64-encoded RFC 2104-compliant HMAC signature.
+ * @throws
+ * java.security.SignatureException when signature generation fails
+ */
+ public static String calculateRFC2104HMAC(String data, String key) throws java.security.SignatureException {
+	String result;
+	try {
+		SecretKeySpec signingKey = new SecretKeySpec(key.getBytes(), HMAC_SHA1_ALGORITHM);
+		Mac mac = Mac.getInstance(HMAC_SHA1_ALGORITHM);
+		mac.init(signingKey);
+		byte[] rawHmac = mac.doFinal(data.getBytes());
+		result = new String(Base64.encodeBase64(rawHmac));
+
+	} catch (Exception e) {
+		throw new SignatureException("Failed to generate HMAC : " + e.getMessage());
+	}
+	return result;
+ }
+```
+      
+
