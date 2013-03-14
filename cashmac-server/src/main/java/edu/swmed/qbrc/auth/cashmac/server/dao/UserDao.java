@@ -8,6 +8,9 @@ import javax.servlet.ServletConfig;
 import org.apache.commons.dbcp.BasicDataSource;
 
 import com.google.inject.Inject;
+
+import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
+import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
 
 public class UserDao extends BaseDao<User> {
@@ -33,10 +36,19 @@ public class UserDao extends BaseDao<User> {
 
 	@Override
 	public User setData(ResultSet results) throws SQLException {
+        // Get Context Parameters for Role table information
+    	String keycol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.User");
+    	if (keycol == null || keycol.equals("")) {
+    		keycol = ((TableName)Role.class.getAnnotation(TableName.class)).keycol();
+    	}
+    	String secretCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.secretCol.User");
+    	if (secretCol == null || secretCol.equals("")) {
+    		secretCol = "secret";
+    	}
+
 		User toReturn = new User();
-		toReturn.setId(results.getString("id"));
-		toReturn.setPassword(results.getString("password"));
-		toReturn.setSecret(results.getString("secret"));
+		toReturn.setId(results.getString(keycol));
+		toReturn.setSecret(results.getString(secretCol));
 		return toReturn;
 	}
 }

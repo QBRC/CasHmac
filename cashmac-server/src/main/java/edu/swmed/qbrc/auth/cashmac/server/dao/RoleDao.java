@@ -75,10 +75,26 @@ public class RoleDao extends BaseDao<Role> {
 	
 	@Override
 	public Role setData(ResultSet results) throws SQLException {
+
+        // Get Context Parameters for Role table information
+    	String keycol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.Role");
+    	if (keycol == null || keycol.equals("")) {
+    		keycol = ((TableName)Role.class.getAnnotation(TableName.class)).keycol();
+    	}
+    	String usernameCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.usercol.Role");
+    	if (usernameCol == null || usernameCol.equals("")) {
+    		usernameCol = "username";
+    	}
+    	String roleCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.rolecol.Role");
+    	if (roleCol == null || roleCol.equals("")) {
+    		roleCol = "role";
+    	}
+
+		
 		Role toReturn = new Role();
-		toReturn.setId(results.getInt("id"));
-		toReturn.setUsername(results.getString("username"));
-		toReturn.setRole(results.getString("role"));
+		toReturn.setId(results.getInt(keycol));
+		toReturn.setUsername(results.getString(usernameCol));
+		toReturn.setRole(results.getString(roleCol));
 		return toReturn;
 	}
 }
