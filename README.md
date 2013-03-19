@@ -202,7 +202,7 @@ HMAC Signature
 
 - Start the string with the http method (probably GET), followed by a new line ("\n").
 - Append the host header in lower case, followed by a new line.
-- Append the request URI, followed by a new line. (the URL minus any query string parameters)
+- Append the URL-encoded request URI, followed by a new line (the URL minus any query string parameters).  If it's blank, use "/".  Do not URL encode any of the unreserved characters that RFC 3986 defines (reference: http://docs.aws.amazon.com/AmazonSimpleDB/latest/DeveloperGuide/HMACAuth.html)
 - Append the date in milliseconds (UTC), followed by a new line.  This date must exactly match the one included in the "Date" request header.
 - Append a sorted list of query string name=value pairs, each pair separated with "&".
 - Encode the entire string with the HMAC-SHA1 algorithm.
@@ -244,36 +244,6 @@ public static String createSignature(HttpRequest request, String date) throws Ex
 	s.append(buildSortedQueryString(request));
 
 	// Return value
-	return s.toString();
-}
-
-/**
- * Sorts the query string and form parameters, URL encodes them, and joins them in
- * '&' delimited, '=' separated name/value pairs.
- * @param request
- * @return
- * @throws URISyntaxException
- */
-private static String buildSortedQueryString(ClientRequest request) throws URISyntaxException {
-	StringBuilder s = new StringBuilder();
-	
-	// Get a single map of all form and query string parameters
-	MultivaluedMap<String, String> combinedMap = request.getFormParameters();
-	combinedMap.putAll(request.getQueryParameters());
-	
-	// Sort by adding all items to a TreeMap
-	TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-	Iterator<String> it = combinedMap.keySet().iterator();
-	while (it.hasNext()) { // Loop through keys
-		String key = it.next();
-		sortedMap.put(encode(key), encode(combinedMap.getFirst(key)));
-	}
-	
-	// Create name=value pairs.
-	for (String key : sortedMap.keySet()) {
-		s.append((s.length() > 0) ? "&" : "").append(key).append("=").append(sortedMap.get(key));
-	}
-	
 	return s.toString();
 }
 
