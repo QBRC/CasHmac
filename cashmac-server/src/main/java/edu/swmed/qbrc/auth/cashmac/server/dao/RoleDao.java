@@ -50,7 +50,7 @@ public class RoleDao extends BaseDao<Role> {
             rs = stmt.executeQuery();
 
             // If a customer was found, load it.
-            if (rs.next()) {
+            while (rs.next()) {
             	results.add(setData(rs));
             }
 
