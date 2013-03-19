@@ -44,7 +44,7 @@ public abstract class BaseDao<T extends BaseEntity> {
     		keycol = ((TableName)clazz.getAnnotation(TableName.class)).keycol();
     	}
 
-        //try {
+        try {
 
             // Get connection
             conn = dataSource.getConnection();
@@ -63,7 +63,7 @@ public abstract class BaseDao<T extends BaseEntity> {
             	result = setData(rs);
             }
 
-        /*} catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Database Error: " + e.getMessage());
         } catch(Exception e) {
             throw new RuntimeException("Exception: " + e.getMessage());
@@ -77,7 +77,7 @@ public abstract class BaseDao<T extends BaseEntity> {
             if (conn != null) {
                 try {conn.close(); } catch (SQLException e) { throw e; }
             }
-        }*/
+        }
 
         return result;
     }    
