@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SignatureException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -55,7 +57,7 @@ public class HMACUtils {
 		s.append(host.toLowerCase()).append("\n");
 		
 		// URI
-		s.append(request.getUri()).append("\n");
+		s.append(baseUriOnly(request.getUri())).append("\n");
 
 		// Date
 		s.append(date).append("\n");
@@ -63,10 +65,22 @@ public class HMACUtils {
 		// Query String
 		s.append(buildSortedQueryString(request));
 
+		System.out.println("HMAC to Sign: " + s.toString());
+		
 		// Return value
 		return s.toString();
 	}
 
+	private static String baseUriOnly(String uri) {
+		String toReturn = uri;
+		
+		if (uri.indexOf("?") > 0) {
+			toReturn = toReturn.substring(0, uri.indexOf("?"));
+		}
+		
+		return toReturn;
+	}
+	
 	/**
 	 * Creates the signature to be passed to the HMAC function.
 	 * @param request
@@ -96,12 +110,14 @@ public class HMACUtils {
 		// Query String
 		s.append(buildSortedQueryString(request));
 
+		System.out.println("HMAC to Sign: " + s.toString());
+
 		// Return value
 		return s.toString();
 	}
 	
 	/**
-	 * Sorts the query string and form parameters, URL encodes them, and joins them in
+	 * Sorts the query string parameters, URL encodes them, and joins them in
 	 * '&' delimited, '=' separated name/value pairs.
 	 * @param request
 	 * @return
@@ -110,16 +126,12 @@ public class HMACUtils {
 	private static String buildSortedQueryString(ClientRequest request) throws URISyntaxException {
 		StringBuilder s = new StringBuilder();
 		
-		// Get a single map of all form and query string parameters
-		MultivaluedMap<String, String> combinedMap = request.getFormParameters();
-		combinedMap.putAll(request.getQueryParameters());
-		
 		// Sort by adding all items to a TreeMap
 		TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-		Iterator<String> it = combinedMap.keySet().iterator();
-		while (it.hasNext()) { // Loop through keys
-			String key = it.next();
-			sortedMap.put(encode(key), encode(combinedMap.getFirst(key)));
+		for (Entry<String, List<String>> param : request.getQueryParameters().entrySet()) {
+			String key = param.getKey();
+			String value = param.getValue().iterator().next();
+			sortedMap.put(encode(key), encode(value));
 		}
 		
 		// Create name=value pairs.
@@ -131,7 +143,7 @@ public class HMACUtils {
 	}
 	
 	/**
-	 * Sorts the query string and form parameters, URL encodes them, and joins them in
+	 * Sorts the query string parameters, URL encodes them, and joins them in
 	 * '&' delimited, '=' separated name/value pairs.
 	 * @param request
 	 * @return
@@ -140,16 +152,12 @@ public class HMACUtils {
 	private static String buildSortedQueryString(HttpRequest request) throws URISyntaxException {
 		StringBuilder s = new StringBuilder();
 		
-		// Get a single map of all form and query string parameters
-		MultivaluedMap<String, String> combinedMap = request.getFormParameters();
-		combinedMap.putAll(request.getUri().getQueryParameters());
-		
 		// Sort by adding all items to a TreeMap
 		TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-		Iterator<String> it = combinedMap.keySet().iterator();
-		while (it.hasNext()) { // Loop through keys
-			String key = it.next();
-			sortedMap.put(encode(key), encode(combinedMap.getFirst(key)));
+		for (Entry<String, List<String>> param : request.getUri().getQueryParameters().entrySet()) {
+			String key = param.getKey();
+			String value = param.getValue().iterator().next();
+			sortedMap.put(encode(key), encode(value));
 		}
 		
 		// Create name=value pairs.
