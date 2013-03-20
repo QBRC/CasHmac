@@ -218,9 +218,9 @@ HMAC Signature
 
 - Start the string with the http method (probably GET), followed by a new line ("\n").
 - Append the host header in lower case, followed by a new line.
-- Append the URL-encoded request URI, followed by a new line (the URL minus any query string parameters).  If it's blank, use "/".  Do not URL encode any of the unreserved characters that RFC 3986 defines (reference: http://docs.aws.amazon.com/AmazonSimpleDB/latest/DeveloperGuide/HMACAuth.html)
+- Append the URL-encoded request URI, followed by a new line (the URL minus any query string parameters; include the "http://").  If it's blank, use "/".  Do not URL encode any of the unreserved characters that RFC 3986 defines (reference: http://docs.aws.amazon.com/AmazonSimpleDB/latest/DeveloperGuide/HMACAuth.html)
 - Append the date in milliseconds (UTC), followed by a new line.  This date must exactly match the one included in the "Date" request header.
-- Append a sorted list of query string name=value pairs, each pair separated with "&".
+- Append a sorted list of query string name=value pairs, each pair separated with "&".  Leave this blank if there are no parameters.
 - Encode the entire string with the HMAC-SHA1 algorithm.
 - Convert the string to Base 64.
 
