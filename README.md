@@ -30,6 +30,12 @@ Our sample application provides the best way to become familiar with CasHmac.  I
 You can use the sample application as a starting point for your next RESTful service. Please find it at https://github.com/QBRC/CasHmac-Sample
 and follow the instructions in its README.md file.
 
+Potential Gotchas
+-----------------
+- The CasHmac library was not properly determining the base URL (URL without the query string) on the client side.  This was resulting in an HMAC mismatch.  I fixed this by simply stripping the URI of any text after the first "?".  There may be a better way to do this.
+
+- For now, because of the issues with form parameters and the client interceptor, I simply configured the client interceptor in the CasHmac client library to ignore any form parameters and only consider the query string parameters.  If you design your RESTful Web service to ignore any FORM parameters, this is fine.  However, if your RESTful Web service could be compromised by FORM parameters, then you'll need to modify CasHmac's shared HMACUtils class to include FORM parameters in the HMAC.
+
 Detailed Configuration
 ======================
 
@@ -185,7 +191,15 @@ Secure your clients (consumers of the RESTful service) with the CasHmac-client l
       User user = messageRestService.get("thomas");
     	out.append(user.toString()).append("\n");
       ```
-      
+
+Client Notes
+-------------
+
+- The RESTEasy library's default ClientExecutor, which is used by the Client Interceptor, was not working with a GWT application.  I think that GWT must append form parameters to all requests automatically.  When the ClientExecutor code sees the form parameters, it assumes that it's dealing with a POST request, and attempts to cast the request to an HttpPost request, which fails since it's actually a GET request.  I created a custom ClientExecutor that extends the implementation used by RESTEasy, and configured it to simply assume that we're dealing with a GET request.  I added the extended ClientExecutor (named GWTClientExecutor) to the CasHmac client library--it's up to the developer using the library whether to go with the custom GWTClientExecutor or the default one provided by RESTEasy.  The CasHmac-Sample's "web-client" sample client application provides an example of using GWTClientExecutor.
+
+- Because the default client connection manager used by RESTEasy is not thread safe, and since some applications may fire off several REST requests, I started having issues with secondary REST requests failing due to a previous connection that was still open.  Based on the JBoss documentation, I figured out how to set up a thread-safe client connection manager, which is also used in the "web-client" sample of the CasHmac-Sample project.
+
+
 HMAC Specifications
 ====================
 If you wish to access a RESTful service protected by CasHmac from a client that doesn't support Java, or if you simply wish to write your own client-side implementation of HMAC, here is the specification you'll need:
