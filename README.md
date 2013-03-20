@@ -227,7 +227,7 @@ HMAC Signature
 HMAC Signature Creation Example
 -------------------------------
 
-Below is the Java code (taken from cashmac-client) used to add the necessary HTTP headers, along with creating a valid HMAC, to an HTTP Request to a RESTful service protected by CasHmac.
+Below is the Java code (taken from cashmac-shared's HMACUtils.java) used to add the necessary HTTP headers, along with creating a valid HMAC, to an HTTP Request to a RESTful service protected by CasHmac.
 
 ```java
 /**
@@ -264,7 +264,7 @@ public static String createSignature(HttpRequest request, String date) throws Ex
 }
 
 /**
- * Sorts the query string and form parameters, URL encodes them, and joins them in
+ * Sorts the query string parameters, URL encodes them, and joins them in
  * '&' delimited, '=' separated name/value pairs.
  * @param request
  * @return
@@ -273,16 +273,12 @@ public static String createSignature(HttpRequest request, String date) throws Ex
 private static String buildSortedQueryString(HttpRequest request) throws URISyntaxException {
 	StringBuilder s = new StringBuilder();
 	
-	// Get a single map of all form and query string parameters
-	MultivaluedMap<String, String> combinedMap = request.getFormParameters();
-	combinedMap.putAll(request.getUri().getQueryParameters());
-	
 	// Sort by adding all items to a TreeMap
 	TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-	Iterator<String> it = combinedMap.keySet().iterator();
-	while (it.hasNext()) { // Loop through keys
-		String key = it.next();
-		sortedMap.put(encode(key), encode(combinedMap.getFirst(key)));
+	for (Entry<String, List<String>> param : request.getUri().getQueryParameters().entrySet()) {
+		String key = param.getKey();
+		String value = param.getValue().iterator().next();
+		sortedMap.put(encode(key), encode(value));
 	}
 	
 	// Create name=value pairs.
@@ -291,7 +287,7 @@ private static String buildSortedQueryString(HttpRequest request) throws URISynt
 	}
 	
 	return s.toString();
-}	
+}
 
 /**
  * URL encoding for a string
