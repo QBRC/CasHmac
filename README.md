@@ -33,7 +33,9 @@ and follow the instructions in its README.md file.
 Potential Gotchas
 -----------------
 - The CasHmac library was not properly determining the base URL (URL without the query string) on the client side.  This was resulting in an HMAC mismatch.  I fixed this by simply stripping the URI of any text after the first "?".  There may be a better way to do this.
+
 - For now, because of the issues with form parameters and the client interceptor, I simply configured the client interceptor in the CasHmac client library to ignore any form parameters and only consider the query string parameters.  If you design your RESTful Web service to ignore any FORM parameters, this is fine.  However, if your RESTful Web service could be compromised by FORM parameters, then you'll need to modify CasHmac's shared HMACUtils class to include FORM parameters in the HMAC.
+
 - CasHmac currently supports CAS authentication, but it doesn't consider roles yet. If the CAS server authenticates a user successfully, the user will be able to use any CasHmac-protected methods.  Role validation is only performed for clients authenticating with HMAC.
 
 Detailed Configuration
