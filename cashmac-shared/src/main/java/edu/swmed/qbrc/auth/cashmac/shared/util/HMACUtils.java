@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+//import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.resteasy.client.ClientRequest;
@@ -88,6 +89,42 @@ public class HMACUtils {
 	 * @return
 	 * @throws Exception
 	 */
+	/*
+	public static String createSignature(ContainerRequestContext request, String date) throws Exception {
+		StringBuilder s = new StringBuilder();
+		
+		// HTTP Verb
+		s.append(request.getMethod()).append("\n");
+		
+		// Host header
+		String host = request.getHeaders().getFirst("HOST");
+		if (host == null) {
+			host = "/";
+		}
+		s.append(host.toLowerCase()).append("\n");
+		
+		// URI
+		s.append(request.getUriInfo().getAbsolutePath().toASCIIString()).append("\n");
+
+		// Date
+		s.append(date).append("\n");
+
+		// Query String
+		s.append(buildSortedQueryString(request));
+
+		System.out.println("HMAC to Sign: " + s.toString());
+
+		// Return value
+		return s.toString();
+	}*/
+	
+	/**
+	 * Creates the signature to be passed to the HMAC function.
+	 * @param request
+	 * @param date
+	 * @return
+	 * @throws Exception
+	 */
 	public static String createSignature(HttpRequest request, String date) throws Exception {
 		StringBuilder s = new StringBuilder();
 		
@@ -141,7 +178,35 @@ public class HMACUtils {
 		
 		return s.toString();
 	}
+
 	
+	/**
+	 * Sorts the query string parameters, URL encodes them, and joins them in
+	 * '&' delimited, '=' separated name/value pairs.
+	 * @param request
+	 * @return
+	 * @throws URISyntaxException
+	 */
+	/*
+	private static String buildSortedQueryString(ContainerRequestContext request) throws URISyntaxException {
+		StringBuilder s = new StringBuilder();
+		
+		// Sort by adding all items to a TreeMap
+		TreeMap<String, String> sortedMap = new TreeMap<String, String>();
+		for (Entry<String, List<String>> param : request.getUriInfo().getQueryParameters().entrySet()) {
+			String key = param.getKey();
+			String value = param.getValue().iterator().next();
+			sortedMap.put(encode(key), encode(value));
+		}
+		
+		// Create name=value pairs.
+		for (String key : sortedMap.keySet()) {
+			s.append((s.length() > 0) ? "&" : "").append(key).append("=").append(sortedMap.get(key));
+		}
+		
+		return s.toString();
+	}	*/
+
 	/**
 	 * Sorts the query string parameters, URL encodes them, and joins them in
 	 * '&' delimited, '=' separated name/value pairs.

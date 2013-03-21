@@ -1,11 +1,12 @@
 package edu.swmed.qbrc.auth.cashmac.server.data;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
 
 @TableName(value="users", keycol="id")
-public class User implements BaseEntity {
+public class User implements BaseEntity, Principal {
    
 	private static final long serialVersionUID = -8426563258191118662L;
 
@@ -48,6 +49,10 @@ public class User implements BaseEntity {
 	
 	public List<Role> getRoles() {
 		return roles;
+	}
+
+	public String getName() {
+		return id;
 	}
     
 }
