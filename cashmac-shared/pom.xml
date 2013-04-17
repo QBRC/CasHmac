@@ -5,7 +5,6 @@
 	<groupId>edu.swmed.qbrc.auth.cashmac</groupId>
 	<artifactId>cashmac-shared</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.0-SNAPSHOT</version>
 	<name>CAS/HMAC Shared</name>
 	<url>http://maven.apache.org</url>
 

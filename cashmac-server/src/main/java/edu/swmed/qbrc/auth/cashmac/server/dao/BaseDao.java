@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import javax.servlet.ServletConfig;
-import javax.ws.rs.core.Context;
 import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.data.BaseEntity;
