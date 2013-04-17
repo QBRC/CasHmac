@@ -17,7 +17,6 @@ import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.resteasy.spi.interception.AcceptedByMethod;
 import org.jboss.resteasy.spi.interception.PreProcessInterceptor;
 import java.lang.Class;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -187,6 +186,7 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 	  List<String> annotatedRolesList = Arrays.asList(annotatedRoles.split(","));
 	  
 	  for (String annotatedRole : annotatedRolesList) {
+		  annotatedRole = annotatedRole.trim();
 		  for (Role role : roles){
 			  if (role.getRole().equals(annotatedRole)) {
 				  return true;
