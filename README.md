@@ -47,7 +47,7 @@ Server Configuration
 First, you'll want to configure your RESTful service to require authentication.  We assume that you're using JBoss's RESTEasy, but it should be relatively easy to modify CasHmac to work with other REST frameworks.
 
 1. Include the cashmac-server and cashmac-shared JAR as dependencies for your REST Service project.  They're probably names something like ``cashmac-server-1.0.0-20130314.155633-55.jar`` and ``cashmac-shared-1.0.0-SNAPSHOT.jar``, and you can find them after you compile the CasHmac application.
-2. Annotate any RESTful methods that you wish to secure with the `@Securable` annotation.  You can include a comma-delimited list of roles, if you wish.  In our sample application, you'll find these annotations in `edu.swmed.qbrc.resprirnate.shared.rest.MessageRestService.java`. Depending on your architecture, you may declare your RESTful methods in a shared library (like we do), or in your server application.  Here are two examples:
+2. Annotate any RESTful methods that you wish to secure with the `@RolesAllowed` annotation.  You can include a comma-delimited list of roles, if you wish.  In our sample application, you'll find these annotations in `edu.swmed.qbrc.resprirnate.shared.rest.MessageRestService.java`. Depending on your architecture, you may declare your RESTful methods in a shared library (like we do), or in your server application.  Here are two examples:
 
       ```java        
       @RolesAllowed({})  // This method is secured, but not validated by any roles.
@@ -153,7 +153,7 @@ Client Configuration
 Secure your clients (consumers of the RESTful service) with the CasHmac-client library as follows.
 
 1. Include the cashmac-client and cashmac-shared JAR as dependencies for your REST Service project. 
-2. Create a static function that returns a ClientRequestFactory, from which you can grab a reference to your REST client.  The "client" subproject in the CasHmac-Sample project shows you how to do this for a simple console application.  The "web-client" subproject shows you a more elegant implementation with Guice for dependency injection.
+2. Create a static function that returns a ClientRequestFactory, from which you can grab a reference to your REST client.  The "client" subproject in our sample Guiberest project shows you how to do this for a simple console application.  The "web-client" subproject shows you a more elegant implementation with Guice for dependency injection.
 
       ```java
       private static ClientRequestFactory initializeRequests() {
@@ -197,9 +197,9 @@ Secure your clients (consumers of the RESTful service) with the CasHmac-client l
 Client Notes
 -------------
 
-- The RESTEasy library's default ClientExecutor, which is used by the Client Interceptor, was not working with a GWT application.  I think that GWT must append form parameters to all requests automatically.  When the ClientExecutor code sees the form parameters, it assumes that it's dealing with a POST request, and attempts to cast the request to an HttpPost request, which fails since it's actually a GET request.  I created a custom ClientExecutor that extends the implementation used by RESTEasy, and configured it to simply assume that we're dealing with a GET request.  I added the extended ClientExecutor (named GWTClientExecutor) to the CasHmac client library--it's up to the developer using the library whether to go with the custom GWTClientExecutor or the default one provided by RESTEasy.  The CasHmac-Sample's "web-client" sample client application provides an example of using GWTClientExecutor.
+- The RESTEasy library's default ClientExecutor, which is used by the Client Interceptor, was not working with a GWT application.  I think that GWT must append form parameters to all requests automatically.  When the ClientExecutor code sees the form parameters, it assumes that it's dealing with a POST request, and attempts to cast the request to an HttpPost request, which fails since it's actually a GET request.  I created a custom ClientExecutor that extends the implementation used by RESTEasy, and configured it to simply assume that we're dealing with a GET request.  I added the extended ClientExecutor (named GWTClientExecutor) to the CasHmac client library--it's up to the developer using the library whether to go with the custom GWTClientExecutor or the default one provided by RESTEasy.  Our sample Guiberest project's "web-client" sample client application provides an example of using GWTClientExecutor.
 
-- Because the default client connection manager used by RESTEasy is not thread safe, and since some applications may fire off several REST requests, I started having issues with secondary REST requests failing due to a previous connection that was still open.  Based on the JBoss documentation, I figured out how to set up a thread-safe client connection manager, which is also used in the "web-client" sample of the CasHmac-Sample project.
+- Because the default client connection manager used by RESTEasy is not thread safe, and since some applications may fire off several REST requests, I started having issues with secondary REST requests failing due to a previous connection that was still open.  Based on the JBoss documentation, I figured out how to set up a thread-safe client connection manager, which is also used in the "web-client" sample of our sample Guiberest project.
 
 
 HMAC Specifications
