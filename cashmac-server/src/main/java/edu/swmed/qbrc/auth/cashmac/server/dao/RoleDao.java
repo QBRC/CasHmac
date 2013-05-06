@@ -19,7 +19,7 @@ public class RoleDao extends BaseDao<Role> {
 		super(Role.class, servletConfig, dataSource);
     }
 
-    /* Load a customer */
+    /* Load a role */
     public List<Role> findByUsername(String username) throws SQLException {
 
         PreparedStatement stmt = null;

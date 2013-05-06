@@ -25,7 +25,6 @@ public abstract class BaseDao<T extends BaseEntity> {
 
     public abstract T setData(ResultSet results) throws SQLException;
     
-    /* Load a customer */
     public T load(Object id) throws SQLException {
 
         PreparedStatement stmt = null;
@@ -57,7 +56,7 @@ public abstract class BaseDao<T extends BaseEntity> {
             // Execute query
             rs = stmt.executeQuery();
 
-            // If a customer was found, load it.
+            // If an item was found, load it.
             if (rs.next()) {
             	result = setData(rs);
             }
