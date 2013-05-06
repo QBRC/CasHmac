@@ -11,7 +11,7 @@ CasHmac includes the following features:
 
 1. CAS authentication for a RESTful Web service.  This is useful for when a user access your service directly by entering the URL in a Web browser, since HMAC is difficult to implement in this situation.
 2. HMAC-based authentication for consumers of the RESTful Web service.  See the end of this document for the specifications for generating the HMAC expected by this library.
-3. A Sample Application (https://github.com/QBRC/CasHmac-Sample) that includes a RESTful service (RESTEasy), along with sample console and web clients.
+3. A Sample Application (https://github.com/QBRC/Guiberest) that includes a RESTful service (RESTEasy), along with sample console and web clients.
 4. Simple role-based validation.
 5. Integrated H2 database (in sample application) for quick testing.
 6. Database settings (driver, url, user information, tables and key columns) configured in containing application's web.xml.
@@ -26,8 +26,8 @@ Getting Started
 
 Sample Application
 ------------------
-Our sample application provides the best way to become familiar with CasHmac.  In fact, it includes a fully-function RESTful Web service that implements JBoss's RESTEasy
-You can use the sample application as a starting point for your next RESTful service. Please find it at https://github.com/QBRC/CasHmac-Sample
+Our sample application provides the best way to become familiar with CasHmac.  In fact, it includes a fully-function RESTful Web service that implements JBoss's RESTEasy.
+You can use the sample application as a starting point for your next RESTful service. Please find it at https://github.com/QBRC/Guiberest
 and follow the instructions in its README.md file.
 
 Potential Gotchas
@@ -50,13 +50,13 @@ First, you'll want to configure your RESTful service to require authentication. 
 2. Annotate any RESTful methods that you wish to secure with the `@Securable` annotation.  You can include a comma-delimited list of roles, if you wish.  In our sample application, you'll find these annotations in `edu.swmed.qbrc.resprirnate.shared.rest.MessageRestService.java`. Depending on your architecture, you may declare your RESTful methods in a shared library (like we do), or in your server application.  Here are two examples:
 
       ```java        
-      @Securable("")  // This method is secured, but not validated by any roles.
+      @RolesAllowed({})  // This method is secured, but not validated by any roles.
       @GET
       @Path("/user/{param}")
       @Produces("application/json")
       public User get(@PathParam("param") String id);
       
-      @Securable("admin,manager") // This method is secured and limited to users in the "admin" or "manager" roles.
+      @RolesAllowed({"admin", "manager"}) // This method is secured and limited to users in the "admin" or "manager" roles.
       @GET
       @Path("/{param}")
       public Response printMessage(@PathParam("param") String msg);
