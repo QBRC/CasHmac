@@ -30,6 +30,8 @@ Our sample application provides the best way to become familiar with CasHmac.  I
 You can use the sample application as a starting point for your next RESTful service. Please find it at https://github.com/QBRC/Guiberest
 and follow the instructions in its README.md file.
 
+We previously provided a CasHmac-Sample sample application, but the Guiberest example provides a more complete and elegant example, so we deprecated the CasHmac-Sample application.
+
 Potential Gotchas
 -----------------
 - The CasHmac library was not properly determining the base URL (URL without the query string) on the client side.  This was resulting in an HMAC mismatch.  I fixed this by simply stripping the URI of any text after the first "?".  There may be a better way to do this.
