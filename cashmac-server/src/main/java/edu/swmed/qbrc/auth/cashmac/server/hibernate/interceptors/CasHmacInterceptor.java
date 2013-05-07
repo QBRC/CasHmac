@@ -3,7 +3,6 @@ package edu.swmed.qbrc.auth.cashmac.server.hibernate.interceptors;
 import java.io.Serializable;
 import org.hibernate.EmptyInterceptor;
 import org.hibernate.type.Type;
-
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 
 public class CasHmacInterceptor extends EmptyInterceptor {
