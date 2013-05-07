@@ -124,13 +124,8 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 						String hmac = HMACUtils.calculateRFC2104HMAC(toSign, user.getSecret());
 						if (hmac.equals(hmacSignature)) {
 
-							// Allow any authenticated user if the role is blank.
-							if (roles.equals("")) {
-								return null;
-							}
-							
-							// If the annotation includes a role or roles, check to see if the user has the role
-							else if (checkRoles(user.getRoles(), roles)) {
+							// Check to see if the user has the role (allow any authenticated user if no role specified).
+							if (checkRoles(user.getRoles(), roles)) {
 								return null;
 							}
 							
@@ -182,6 +177,11 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 
 	private Boolean checkRoles(List<Role> roles, String[] annotatedRoles) {
 	  
+		// Allow any authenticated user if no roles were listed.
+		if (annotatedRoles.length == 0) {
+			return true;
+		}
+		
 		for (String annotatedRole : annotatedRoles) {
 		  annotatedRole = annotatedRole.trim();
 		  for (Role role : roles){
