@@ -1,6 +1,6 @@
 package edu.swmed.qbrc.auth.cashmac.shared.acl;
 
-public class CrudAclSearch<T> {
+public class CrudAclSearch {
 
 	private final Boolean hasNeccessaryAcl;
 	
@@ -10,7 +10,7 @@ public class CrudAclSearch<T> {
 	 * @param object
 	 * @param access
 	 */
-	public CrudAclSearch(T object, String access) {
+	public CrudAclSearch(Object entity, String access) {
 		hasNeccessaryAcl = false;
 	}
 

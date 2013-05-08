@@ -8,9 +8,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+
+import edu.swmed.qbrc.auth.cashmac.shared.acl.CrudAclSearchFactory;
 
 public class GuiceModule extends AbstractModule {
 	
@@ -22,10 +24,9 @@ public class GuiceModule extends AbstractModule {
 	
 	@Override
 	protected void configure() {
-		//JpaPersistModule jpa = new JpaPersistModule(getPersistenceUnit());
-		//install(new JpaPersistModule(getPersistenceUnit()));
 		Names.bindProperties(binder(), loadProperties());
-		bind(BasicDataSource.class).toProvider(DBConnectionPool.class).in(Scopes.SINGLETON);
+		bind(BasicDataSource.class).toProvider(DBConnectionPool.class).in(Singleton.class);
+		bind(CrudAclSearchFactory.class).in(Singleton.class);
 	}
 
 	@Provides
@@ -91,6 +92,5 @@ public class GuiceModule extends AbstractModule {
     	return props;
 
 	}
-	
 	
 }

@@ -14,6 +14,11 @@ import javax.servlet.http.HttpSession;
 public class CasHmacRequestFilter implements Filter {
 
 	private static ThreadLocal<HttpServletRequest> localRequest = new ThreadLocal<HttpServletRequest>();
+	private static ServletConfigCustom servletConfig;
+	
+	public static ServletConfigCustom getConfig() {
+		return servletConfig;
+	}
 	
 	public static HttpServletRequest getRequest() {
 		return localRequest.get();
@@ -31,7 +36,7 @@ public class CasHmacRequestFilter implements Filter {
 		}
 		
 		try {
-			filterChain.doFilter(servletRequest,  servletResponse);
+			filterChain.doFilter(servletRequest, servletResponse);
 		}
 		finally {
 			localRequest.remove();
@@ -39,11 +44,12 @@ public class CasHmacRequestFilter implements Filter {
 	}
 
 	@Override
-	public void init(FilterConfig arg0) throws ServletException {
+	public void destroy() {
 	}
 
 	@Override
-	public void destroy() {
+	public void init(FilterConfig config) throws ServletException {
+		this.servletConfig = new ServletConfigCustom(config);
 	}
 	
 }
