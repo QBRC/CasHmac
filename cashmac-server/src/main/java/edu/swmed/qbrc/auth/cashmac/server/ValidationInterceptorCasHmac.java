@@ -33,6 +33,7 @@ import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 import edu.swmed.qbrc.auth.cashmac.server.guice.GuiceModule;
+import edu.swmed.qbrc.auth.cashmac.shared.annotations.NoCasAuth;
 import edu.swmed.qbrc.auth.cashmac.shared.util.HMACUtils;
 
 @Provider
@@ -56,7 +57,7 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 
 
 	/**
-	*  Only authenticate requests to REST functions that include the @Securable annotation
+	*  Only authenticate requests to REST functions that include the @RolesAllowed annotation
 	*/
 	public boolean accept(@SuppressWarnings("rawtypes") Class clazz, Method method) {
 		return method.isAnnotationPresent(RolesAllowed.class);
@@ -69,7 +70,6 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 	public ServerResponse preProcess(HttpRequest httpRequest, ResourceMethod resourceMethod)
 		  throws Failure, WebApplicationException {
 
-	  
 		final HttpServletRequest request = (HttpServletRequest) servletRequest;
 		final HttpServletResponse response = (HttpServletResponse) servletResponse;
 		final HttpSession session = request.getSession(false);
@@ -122,6 +122,7 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 
 							// Check to see if the user has the role (allow any authenticated user if no role specified).
 							if (checkRoles(user.getRoles(), roles)) {
+								CasHmacRequestFilter.getSession().setAttribute("user", user);
 								return null;
 							}
 							
@@ -143,30 +144,39 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 		    	return (ServerResponse)Response.status(Status.FORBIDDEN).entity("Error calculating HMAC: " + e.getMessage()).build();
 			}
 		}
-		  
-		// Get context parameters for CAS server login URL and service URL
-		casServerLoginUrl = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serverLoginUrl");
-		serverName = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serviceName");
-
-		final Assertion assertion = session != null ? (Assertion) session.getAttribute(AbstractCasFilter.CONST_CAS_ASSERTION) : null;
-		if (assertion != null) {
-			return null;
+		
+		// Don't allow CAS if the "@NoCasAuth" annotation is present on the RESTful method.
+		if (!resourceMethod.getMethod().isAnnotationPresent(NoCasAuth.class)) {
+		
+			// Get context parameters for CAS server login URL and service URL
+			casServerLoginUrl = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serverLoginUrl");
+			serverName = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serviceName");
+	
+			final Assertion assertion = session != null ? (Assertion) session.getAttribute(AbstractCasFilter.CONST_CAS_ASSERTION) : null;
+			if (assertion != null) {
+				return null;
+			}
+	
+			final String serviceUrl =  CommonUtils.constructServiceUrl(request, response, null, this.serverName, TICKET_PARAM_NAME, true);
+			final String ticket = CommonUtils.safeGetParameter(request, TICKET_PARAM_NAME);
+	
+			if (CommonUtils.isNotBlank(ticket)) {
+			    return null;
+			}
+	
+			final String modifiedServiceUrl = serviceUrl;
+			final String urlToRedirectTo = CommonUtils.constructRedirectUrl(this.casServerLoginUrl, SERVICE_PARAM_NAME, modifiedServiceUrl, false, false);
+	
+			try {
+				return (ServerResponse)Response.status(Status.TEMPORARY_REDIRECT).location(new URI(urlToRedirectTo)).build();
+			} catch (URISyntaxException e) {
+				return (ServerResponse)Response.status(Status.FORBIDDEN).entity("Invalid CAS Login URL: " + urlToRedirectTo).build();
+			}
 		}
-
-		final String serviceUrl =  CommonUtils.constructServiceUrl(request, response, null, this.serverName, TICKET_PARAM_NAME, true);
-		final String ticket = CommonUtils.safeGetParameter(request, TICKET_PARAM_NAME);
-
-		if (CommonUtils.isNotBlank(ticket)) {
-		    return null;
-		}
-
-		final String modifiedServiceUrl = serviceUrl;
-		final String urlToRedirectTo = CommonUtils.constructRedirectUrl(this.casServerLoginUrl, SERVICE_PARAM_NAME, modifiedServiceUrl, false, false);
-
-		try {
-			return (ServerResponse)Response.status(Status.TEMPORARY_REDIRECT).location(new URI(urlToRedirectTo)).build();
-		} catch (URISyntaxException e) {
-			return (ServerResponse)Response.status(Status.FORBIDDEN).entity("Invalid CAS Login URL: " + urlToRedirectTo).build();
+		
+		// Unable to authenticate with HMAC or CAS, but authentication is required, so throw an error.
+		else {
+			return (ServerResponse)Response.status(Status.FORBIDDEN).entity("No HMAC authentication information was supplied, and CAS authentication is prohibited for this method.").build();
 		}
 
 	}

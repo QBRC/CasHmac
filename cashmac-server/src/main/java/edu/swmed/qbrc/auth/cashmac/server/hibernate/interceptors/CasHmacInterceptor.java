@@ -6,12 +6,13 @@ import org.hibernate.type.Type;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+
+import edu.swmed.qbrc.auth.cashmac.server.acl.CrudAclSearch;
+import edu.swmed.qbrc.auth.cashmac.server.acl.CrudAclSearchFactory;
 import edu.swmed.qbrc.auth.cashmac.server.dao.UserDao;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 import edu.swmed.qbrc.auth.cashmac.server.guice.GuiceModule;
 import edu.swmed.qbrc.auth.cashmac.server.hibernate.exceptions.NoAclException;
-import edu.swmed.qbrc.auth.cashmac.shared.acl.CrudAclSearch;
-import edu.swmed.qbrc.auth.cashmac.shared.acl.CrudAclSearchFactory;
 import edu.swmed.qbrc.auth.cashmac.shared.constants.CasHmacAccessLevels;
 
 public class CasHmacInterceptor extends EmptyInterceptor {

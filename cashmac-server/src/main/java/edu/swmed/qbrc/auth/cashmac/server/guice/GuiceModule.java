@@ -12,7 +12,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
-import edu.swmed.qbrc.auth.cashmac.shared.acl.CrudAclSearchFactory;
+import edu.swmed.qbrc.auth.cashmac.server.acl.CrudAclSearchFactory;
 
 public class GuiceModule extends AbstractModule {
 	

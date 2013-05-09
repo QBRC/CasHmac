@@ -1,7 +1,6 @@
 package edu.swmed.qbrc.auth.cashmac.server.data;
 
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
-import edu.swmed.qbrc.auth.cashmac.shared.data.BaseEntity;
 
 @TableName(value="acl", keycol="id")
 public class ACL implements BaseEntity {
@@ -82,7 +81,7 @@ public class ACL implements BaseEntity {
     
 	@Override
 	public String toString() {
-		return "ACL";
+		return "acl";
 	}
     
 }

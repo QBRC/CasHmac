@@ -1,4 +1,4 @@
-package edu.swmed.qbrc.auth.cashmac.shared.data;
+package edu.swmed.qbrc.auth.cashmac.server.data;
 
 import java.io.Serializable;
 
