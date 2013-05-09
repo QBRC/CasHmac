@@ -1,6 +1,9 @@
 package edu.swmed.qbrc.auth.cashmac.server.filters;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -14,9 +17,9 @@ import javax.servlet.http.HttpSession;
 public class CasHmacRequestFilter implements Filter {
 
 	private static ThreadLocal<HttpServletRequest> localRequest = new ThreadLocal<HttpServletRequest>();
-	private static ServletConfigCustom servletConfig;
+	private static Map<String, String> servletConfig = new HashMap<String, String>();
 	
-	public static ServletConfigCustom getConfig() {
+	public static Map<String, String> getConfig() {
 		return servletConfig;
 	}
 	
@@ -49,7 +52,11 @@ public class CasHmacRequestFilter implements Filter {
 
 	@Override
 	public void init(FilterConfig config) throws ServletException {
-		this.servletConfig = new ServletConfigCustom(config);
+		Enumeration<?> enumer = config.getInitParameterNames();
+		while (enumer.hasMoreElements()) {
+			String key = (String)enumer.nextElement();
+			servletConfig.put(key, config.getInitParameter(key));
+		}
 	}
 	
 }

@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
-import javax.servlet.ServletConfig;
+import java.util.Map;
 import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.data.BaseEntity;
@@ -13,11 +13,11 @@ import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
 public abstract class BaseDao<T extends BaseEntity> {    
     private final Class<T> clazz;
 
-    final ServletConfig servletConfig;
+    final Map<String, String> servletConfig;
     final BasicDataSource dataSource;
     
     @Inject
-    public BaseDao(final Class<T> clazz, final ServletConfig servletConfig, final BasicDataSource dataSource) { 
+    public BaseDao(final Class<T> clazz, final Map<String, String> servletConfig, final BasicDataSource dataSource) { 
         this.clazz = clazz;
         this.servletConfig = servletConfig;
         this.dataSource = dataSource;
@@ -33,11 +33,11 @@ public abstract class BaseDao<T extends BaseEntity> {
         T result = null;
         
         // Get Context Parameters for table information
-    	String table = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table." + clazz.getSimpleName());
+    	String table = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table." + clazz.getSimpleName());
     	if (table == null || table.equals("")) {
     		table = ((TableName)clazz.getAnnotation(TableName.class)).value();
     	}
-    	String keycol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol." + clazz.getSimpleName());
+    	String keycol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol." + clazz.getSimpleName());
     	if (keycol == null || keycol.equals("")) {
     		keycol = ((TableName)clazz.getAnnotation(TableName.class)).keycol();
     	}

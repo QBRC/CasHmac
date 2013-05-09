@@ -1,7 +1,6 @@
 package edu.swmed.qbrc.auth.cashmac.server;
 
 import javax.annotation.security.RolesAllowed;
-import javax.servlet.ServletConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -32,6 +31,7 @@ import com.google.inject.Injector;
 import edu.swmed.qbrc.auth.cashmac.server.dao.UserDao;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
+import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 import edu.swmed.qbrc.auth.cashmac.server.guice.GuiceModule;
 import edu.swmed.qbrc.auth.cashmac.shared.util.HMACUtils;
 
@@ -43,8 +43,6 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 	private HttpServletRequest servletRequest;
 	@Context
 	private HttpServletResponse servletResponse;
-	@Context
-	private ServletConfig servletConfig;
 
 	@Inject UserDao userDao;
 
@@ -76,14 +74,12 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 		final HttpServletResponse response = (HttpServletResponse) servletResponse;
 		final HttpSession session = request.getSession(false);
 
-		/* Sets up the injector and inject self, if not already done.
-		 * We do this within the interceptor implementation since it appears to be the only
-		 * place where the "servletConfig" variable is in scope.  We need to pass servletConfig
-		 * to the Guice Module in order for it to be available to other objects (DAOs).
+		/* 
+		 * Sets up the injector and inject self, if not already done.
 		 */
 		if (! isInjected) {
 			System.out.println("Initializing Guice Injector.");
-			Injector injector = Guice.createInjector(new GuiceModule(servletConfig));
+			Injector injector = Guice.createInjector(new GuiceModule(CasHmacRequestFilter.getConfig()));
 			injector.injectMembers(this);
 			isInjected = true;
 		}
@@ -149,8 +145,8 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 		}
 		  
 		// Get context parameters for CAS server login URL and service URL
-		casServerLoginUrl = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.cas.serverLoginUrl");
-		serverName = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.cas.serviceName");
+		casServerLoginUrl = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serverLoginUrl");
+		serverName = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serviceName");
 
 		final Assertion assertion = session != null ? (Assertion) session.getAttribute(AbstractCasFilter.CONST_CAS_ASSERTION) : null;
 		if (assertion != null) {

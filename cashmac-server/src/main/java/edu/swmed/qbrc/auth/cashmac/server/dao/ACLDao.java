@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.servlet.ServletConfig;
+import java.util.Map;
 import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
@@ -15,7 +15,7 @@ import edu.swmed.qbrc.auth.cashmac.server.data.ACL;
 public class ACLDao extends BaseDao<ACL> {
 	
 	@Inject
-	public ACLDao(final ServletConfig servletConfig, final BasicDataSource dataSource) {
+	public ACLDao(final Map<String, String> servletConfig, final BasicDataSource dataSource) {
 		super(ACL.class, servletConfig, dataSource);
     }
 
@@ -28,11 +28,11 @@ public class ACLDao extends BaseDao<ACL> {
         List<ACL> results = new ArrayList<ACL>();
         
         // Get Context Parameters for ACL table information
-    	String table = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.ACL");
+    	String table = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.ACL");
     	if (table == null || table.equals("")) {
             table = ((TableName)ACL.class.getAnnotation(TableName.class)).value();
     	}
-    	String usernameCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.usercol.ACL");
+    	String usernameCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.usercol.ACL");
     	if (usernameCol == null || usernameCol.equals("")) {
     		usernameCol = "username";
     	}
@@ -77,27 +77,27 @@ public class ACLDao extends BaseDao<ACL> {
 	public ACL setData(ResultSet results) throws SQLException {
 
         // Get Context Parameters for ACL table information
-    	String keycol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.ACL");
+    	String keycol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.ACL");
     	if (keycol == null || keycol.equals("")) {
     		keycol = ((TableName)ACL.class.getAnnotation(TableName.class)).keycol();
     	}
-    	String usernameCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.usercol.ACL");
+    	String usernameCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.usercol.ACL");
     	if (usernameCol == null || usernameCol.equals("")) {
     		usernameCol = "username";
     	}
-    	String roleCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.rolecol.ACL");
+    	String roleCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.rolecol.ACL");
     	if (roleCol == null || roleCol.equals("")) {
     		roleCol = "role_id";
     	}
-    	String accessCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.accesscol.ACL");
+    	String accessCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.accesscol.ACL");
     	if (accessCol == null || accessCol.equals("")) {
     		accessCol = "access";
     	}
-    	String classCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.classcol.ACL");
+    	String classCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.classcol.ACL");
     	if (classCol == null || classCol.equals("")) {
     		classCol = "class";
     	}
-    	String pkCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.pkcol.ACL");
+    	String pkCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.pkcol.ACL");
     	if (pkCol == null || pkCol.equals("")) {
     		pkCol = "pk";
     	}

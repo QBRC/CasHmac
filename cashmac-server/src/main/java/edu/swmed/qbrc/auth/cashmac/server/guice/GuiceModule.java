@@ -1,8 +1,8 @@
 package edu.swmed.qbrc.auth.cashmac.server.guice;
 
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Properties;
-import javax.servlet.ServletConfig;
 import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -16,9 +16,9 @@ import edu.swmed.qbrc.auth.cashmac.shared.acl.CrudAclSearchFactory;
 
 public class GuiceModule extends AbstractModule {
 	
-	private final ServletConfig servletConfig;
+	private final Map<String, String> servletConfig;
 	
-	public GuiceModule(ServletConfig servletConfig) {
+	public GuiceModule(Map<String, String> servletConfig) {
 		this.servletConfig = servletConfig;
 	}
 	
@@ -30,7 +30,7 @@ public class GuiceModule extends AbstractModule {
 	}
 
 	@Provides
-	ServletConfig provideServletConfig() {
+	Map<String, String> provideServletConfig() {
 		return this.servletConfig;
 	}
 	
@@ -66,19 +66,19 @@ public class GuiceModule extends AbstractModule {
 	
 	private Properties loadProperties() {
     	// Get context parameters for JDBC connection information
-    	String driver = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.jdbcdriver");
+    	String driver = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.jdbcdriver");
     	if (driver == null || driver.equals("")) {
     		driver = "org.h2.Driver";
     	}
-    	String url = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.jdbcurl");
+    	String url = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.jdbcurl");
     	if (url == null || url.equals("")) {
     		url = "jdbc:h2:~/cashmacSampleServerDB";
     	}
-    	String user = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.username");
+    	String user = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.username");
     	if (user == null || user.equals("")) {
     		user = "sa";
     	}
-    	String password = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.password");
+    	String password = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.password");
     	if (password == null || password.equals("")) {
     		password = "";
     	}
