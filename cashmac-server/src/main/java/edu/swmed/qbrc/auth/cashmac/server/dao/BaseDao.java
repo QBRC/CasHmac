@@ -7,8 +7,8 @@ import java.sql.ResultSet;
 import java.util.Map;
 import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.Inject;
-import edu.swmed.qbrc.auth.cashmac.server.data.BaseEntity;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
+import edu.swmed.qbrc.auth.cashmac.shared.data.BaseEntity;
 
 public abstract class BaseDao<T extends BaseEntity> {    
     private final Class<T> clazz;

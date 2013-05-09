@@ -28,13 +28,18 @@ public class CasHmacInterceptor extends EmptyInterceptor {
 	
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		System.out.println("Created: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
-		return super.onSave(entity, id, state, propertyNames, types);
+		//System.out.println("Created: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
+		CrudAclSearch acl = crudAclSearchFactory.find(entity, CasHmacAccessLevels.CREATE);
+		if (acl.getHasNeccessaryAcl()) {
+			return super.onSave(entity, id, state, propertyNames, types);
+		} else {
+			throw new NoAclException("No ACL to insert entity of type " + entity.getClass().getSimpleName());
+		}
 	}
 	
 	@Override
 	public boolean onLoad(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		System.out.println("Read: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
+		//System.out.println("Read: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
 		CrudAclSearch acl = crudAclSearchFactory.find(entity, CasHmacAccessLevels.READ);
 		if (acl.getHasNeccessaryAcl()) {
 			return super.onLoad(entity, id, state, propertyNames, types);
@@ -45,14 +50,24 @@ public class CasHmacInterceptor extends EmptyInterceptor {
 
 	@Override
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState, String[] propertyNames, Type[] types) {
-		System.out.println("Updated: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
-		return super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types);
+		//System.out.println("Updated: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
+		CrudAclSearch acl = crudAclSearchFactory.find(entity, CasHmacAccessLevels.UPDATE);
+		if (acl.getHasNeccessaryAcl()) {
+			return super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types);
+		} else {
+			throw new NoAclException("No ACL to update entity of type " + entity.getClass().getSimpleName());
+		}
 	}
 
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		System.out.println("Deleted: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
-		super.onDelete(entity, id, state, propertyNames, types);
+		//System.out.println("Deleted: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
+		CrudAclSearch acl = crudAclSearchFactory.find(entity, CasHmacAccessLevels.DELETE);
+		if (acl.getHasNeccessaryAcl()) {
+			super.onDelete(entity, id, state, propertyNames, types);
+		} else {
+			throw new NoAclException("No ACL to delete entity of type " + entity.getClass().getSimpleName());
+		}
 	}
 	
 }

@@ -1,6 +1,7 @@
 package edu.swmed.qbrc.auth.cashmac.server.data;
 
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
+import edu.swmed.qbrc.auth.cashmac.shared.data.BaseEntity;
 
 @TableName(value="roles", keycol="id")
 public class Role implements BaseEntity {

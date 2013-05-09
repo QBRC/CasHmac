@@ -21,6 +21,7 @@
 		<project.deployment.encoding>UTF-8</project.deployment.encoding>
 
 		<junit.version>4.10</junit.version>
+        <guice.version>3.1.3</guice.version>
 
 		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
 		<maven-war-plugin.version>2.2</maven-war-plugin.version>
@@ -42,6 +43,18 @@
 		      <artifactId>resteasy-jaxrs</artifactId>
 		      <version>${resteasy.version}</version>
 		</dependency>
+
+        <!-- DI dependencies -->
+        <dependency>
+            <groupId>org.sonatype.sisu</groupId>
+            <artifactId>sisu-guice</artifactId>
+            <version>${guice.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.sonatype.sisu.inject</groupId>
+            <artifactId>guice-assistedinject</artifactId>
+            <version>${guice.version}</version>
+        </dependency>
 		
 
 	</dependencies>

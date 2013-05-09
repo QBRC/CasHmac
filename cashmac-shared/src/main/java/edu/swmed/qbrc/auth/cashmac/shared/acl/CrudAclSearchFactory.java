@@ -6,7 +6,7 @@ public class CrudAclSearchFactory {
 	}
 	
 	public CrudAclSearch find(Object entity, String access) {
-		return new CrudAclSearch(entity, access);
+		return new CrudAclSearch(this, entity, access);
 	}
 	
 }

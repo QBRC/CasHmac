@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
+import edu.swmed.qbrc.auth.cashmac.shared.data.BaseEntity;
 
 @TableName(value="users", keycol="id")
 public class User implements BaseEntity, Principal {
