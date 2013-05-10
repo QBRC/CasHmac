@@ -12,6 +12,7 @@ import edu.swmed.qbrc.auth.cashmac.server.data.ACL;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
+import edu.swmed.qbrc.auth.cashmac.server.hibernate.exceptions.BadAclRoleException;
 import edu.swmed.qbrc.auth.cashmac.shared.annotations.*;
 import edu.swmed.qbrc.auth.cashmac.shared.constants.CasHmacAccessLevels;
 
@@ -68,6 +69,14 @@ public class CrudAclSearch {
 		 *  If an object doesn't have an Object ACL, we know immediately that no ACLs will be read or written
 		 * for the object directly.  There could still be, however, foreign key ACLs for this object.
 		 * Process CRUD ACLs for this object only if the class has an Object ACL.
+		 * 
+		 * We don't check for a CREATE access level ACL here, since all ACLs are tied to a PK value, and there
+		 * isn't a PK yet for a new object.  You'll need to check for CREATE permission with @RolesRequired
+		 * annotation on the RESTful method.  Please note, however, that the findPropertyAcls method (called
+		 * here) does check for @CasHmacForeignFieldCreate annotations on foreign key fields in the entity.
+		 * For example, you could use @CasHmacForeignFieldCreate to configure a Customer object to require
+		 * CREATE or UPDATE access to the Store object referenced in its Customer.storeId field. 
+		 * 
 		 */
 		if (casHmacObjectAcl != null && casHmacPKFieldAnn != null) {
 			if (returnValue && access.equals(CasHmacAccessLevels.READ) && casHmacObjectRead != null) {
@@ -85,12 +94,56 @@ public class CrudAclSearch {
 		}
 
 		// Process Write ACLs (ACLs to write when object is saved) if saving a new item
-		if (casHmacWriteAclAnn != null && casHmacWriteAclAnn.getAnnotation() != null && access == CasHmacAccessLevels.CREATE) {
+		if (casHmacWriteAclAnn != null && casHmacPKFieldAnn != null && access.equals(CasHmacAccessLevels.CREATE)) {
+			// Get user from session
+			User user = (User)CasHmacRequestFilter.getSession().getAttribute("user");
 			for (CasHmacWriteAclParameter param : ((CasHmacWriteAcl)casHmacWriteAclAnn.getAnnotation()).value()) {
-				param.access();
-				for (String role : param.roles()) {
-					//TODO write the new ACL here.
-					role = role + ""; // Remove me.
+				
+				// Access Level
+				String newAclAccess = param.access();
+				
+				// If no role exist, insert "SELF"
+				String[] roles = { "SELF" };
+				if (param.roles().length > 0) {
+					roles = param.roles();
+				}
+				
+				// For each role
+				for (String newAclRole : roles) {
+					
+					// Create new ACL
+					ACL newAcl = new ACL();
+					newAcl.setAccess(newAclAccess);
+
+					// If role is "SELF", then set to current user.
+					if (newAclRole.equals("SELF")) {
+						newAcl.setUsername(user.getId());
+					}
+					
+					// Otherwise, check roles and set roles
+					else {
+						// Load Role to ensure that it exists
+						Role newRole = null;
+						try {
+							newRole = crudAclSearchFactory.getRoleDao().findByRoleName(newAclRole);
+						} catch (SQLException e1) {
+							e1.printStackTrace();
+						}
+						if (newRole == null) {
+							throw new BadAclRoleException("Unable to create ACL for new object; unable to find role " + newAclRole);
+						}
+						// Set role
+						newAcl.setRoleId(newRole.getId());
+					}
+					
+					newAcl.setObjectClass(entity.getClass().getName());
+					newAcl.setObjectPK(casHmacPKFieldAnn.getValue());
+					try {
+						crudAclSearchFactory.getAclDao().put(newAcl);
+					} catch (SQLException e) {
+						e.printStackTrace();
+						throw new BadAclRoleException("Unable to create ACL for new object; SQLException: " + e.getMessage());
+					}
 				}
 			}
 		}

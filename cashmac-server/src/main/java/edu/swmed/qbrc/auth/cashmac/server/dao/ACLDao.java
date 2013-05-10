@@ -90,6 +90,59 @@ public class ACLDao extends BaseDao<ACL> {
     	this.pkCol = pkCol;
     }
 
+	/* Save an ACL */
+	public void put(ACL acl) throws SQLException {
+		
+        PreparedStatement stmt = null;
+        Connection conn = null;
+    	
+        try {
+
+            // Get connection
+            conn = dataSource.getConnection();
+
+            // Prepare query
+            String sqlstmt = 
+            		"INSERT INTO " + table + " (" +
+            			usernameCol + ", " +
+            		    roleCol + ", " +
+            			accessCol + ", " +
+            		    classCol + ", " +
+            			pkCol +
+            		") VALUES (?, ?, ?, ?, ?)";
+            		
+            stmt = conn.prepareStatement(sqlstmt);
+            if (acl.getUsername() != null)
+            	stmt.setString(1, acl.getUsername());
+            else
+            	stmt.setNull(1, java.sql.Types.VARCHAR);
+            if (acl.getRoleId() != null)
+            	stmt.setInt   (2, acl.getRoleId());
+            else
+            	stmt.setNull(2, java.sql.Types.INTEGER);
+            stmt.setString(3, acl.getAccess());
+            stmt.setString(4, acl.getObjectClass());
+            stmt.setString(5, acl.getObjectPK());
+
+            // Execute query
+            if (DEBUG) 
+            	System.out.println(sqlstmt);
+            stmt.execute();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database Error: " + e.getMessage());
+        } catch(Exception e) {
+            throw new RuntimeException("Exception: " + e.getMessage());
+        } finally {
+            if (stmt != null) {
+                try {stmt.close(); } catch (SQLException e) { throw e; }
+            }
+            if (conn != null) {
+                try {conn.close(); } catch (SQLException e) { throw e; }
+            }
+        }
+	}
+	
     /* Load an ACL */
     public List<ACL> findAcl(String username, String accessLevel, Class<?> objectClass, String key) throws SQLException {
 
