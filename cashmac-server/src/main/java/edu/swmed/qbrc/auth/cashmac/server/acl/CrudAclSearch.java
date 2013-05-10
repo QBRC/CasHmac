@@ -4,10 +4,10 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.List;
-
 import edu.swmed.qbrc.auth.cashmac.server.data.ACL;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
@@ -16,6 +16,8 @@ import edu.swmed.qbrc.auth.cashmac.shared.annotations.*;
 import edu.swmed.qbrc.auth.cashmac.shared.constants.CasHmacAccessLevels;
 
 public class CrudAclSearch {
+
+	private static Boolean DEBUG = false;
 
 	private final CrudAclSearchFactory crudAclSearchFactory;
 	private final Boolean hasNeccessaryAcl;
@@ -68,7 +70,7 @@ public class CrudAclSearch {
 		 * for the object directly.  There could still be, however, foreign key ACLs for this object.
 		 * Process CRUD ACLs for this object only if the class has an Object ACL.
 		 */
-		if (casHmacObjectAcl != null) {
+		if (casHmacObjectAcl != null && casHmacPKFieldAnn != null) {
 			if (returnValue && access.equals(CasHmacAccessLevels.CREATE) && casHmacObjectCreate != null) {
 				if (! getAcl(casHmacPKFieldAnn.getValue(), casHmacObjectCreate.objectClass(), casHmacObjectCreate.accessLevel()))
 					returnValue = false;
@@ -110,33 +112,53 @@ public class CrudAclSearch {
 	 * @return
 	 */
 	private void findPropertyAcls(Object entity, String access) {
-		BeanInfo info = null;
-		try {
-			info = java.beans.Introspector.getBeanInfo(entity.getClass());
-		} catch (IntrospectionException e) {
-			e.printStackTrace();
-		}
 		
-		if (info != null) {
+		Boolean bAllFound = false;
+		
+		/*
+		 * First, look at the entity's fields and attempt to gather relevant annotations and field
+		 * values from the private fields.
+		 */
+		for (Field field : entity.getClass().getDeclaredFields()) {
+			// If, for some reason, the next two annotations appear more than once, only use the first one.
+			if (casHmacPKFieldAnn == null)
+				casHmacPKFieldAnn = getPropertyAnnotation(CasHmacPKField.class, field, entity);
 			
-			for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-				// If, for some reason, the next two annotations appear more than once, only use the first one.
-				if (casHmacPKFieldAnn == null) {
-					AnnotationAndValue temp1 = getPropertyAnnotation(CasHmacPKField.class, pd, entity);
-					if (temp1.getAnnotation() != null && temp1.getValue() != null)
-						casHmacPKFieldAnn = temp1;
-				}
-				if (casHmacWriteAclAnn == null) {
-					AnnotationAndValue temp2 = getPropertyAnnotation(CasHmacWriteAcl.class, pd, entity);
-					if (temp2.getAnnotation() != null && temp2.getValue() != null)
-						casHmacWriteAclAnn = temp2;
-				}
-				
-				// If both annotations have been found, we can escape this loop and continue.
-				if (casHmacPKFieldAnn != null && casHmacWriteAclAnn != null &&
-						casHmacPKFieldAnn.getAnnotation() != null && casHmacWriteAclAnn.getAnnotation() != null)
-				{
-					break;
+			if (casHmacWriteAclAnn == null)
+				casHmacWriteAclAnn = getPropertyAnnotation(CasHmacWriteAcl.class, field, entity);
+			
+			// If both annotations have been found, we can escape this loop and continue.
+			if (casHmacPKFieldAnn != null && casHmacWriteAclAnn != null) {
+				bAllFound = true; // Flag as all found
+				break;
+			}
+		}
+
+		/*
+		 * If any relevant annotations were not found above, use java.beans.Introspector to further
+		 * reflect upon the entity's getters and setters to find the annotations.
+		 */
+		if (!bAllFound) {
+			
+			BeanInfo info = null;
+			try {
+				info = java.beans.Introspector.getBeanInfo(entity.getClass());
+			} catch (IntrospectionException e) {
+				e.printStackTrace();
+			}
+			
+			if (info != null) {
+				for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+					// If, for some reason, the next two annotations appear more than once, only use the first one.
+					if (casHmacPKFieldAnn == null)
+						casHmacPKFieldAnn = getPropertyAnnotation(CasHmacPKField.class, pd, entity);
+					
+					if (casHmacWriteAclAnn == null)
+						casHmacWriteAclAnn = getPropertyAnnotation(CasHmacWriteAcl.class, pd, entity);
+					
+					// If both annotations have been found, we can escape this loop and continue.
+					if (casHmacPKFieldAnn != null && casHmacWriteAclAnn != null)
+						break;
 				}
 			}
 		}		
@@ -160,6 +182,28 @@ public class CrudAclSearch {
 		Boolean returnValue = true;
 		
 		if (info != null) {
+			for (Field field : entity.getClass().getFields()) {
+				// The next four annotations can be applied to any foreign key fields.
+				AnnotationAndValue casHmacFFCreateAnn = getPropertyAnnotation(CasHmacForeignFieldCreate.class, field, entity);
+				AnnotationAndValue   casHmacFFReadAnn = getPropertyAnnotation(CasHmacForeignFieldRead.class,   field, entity);
+				AnnotationAndValue casHmacFFUpdateAnn = getPropertyAnnotation(CasHmacForeignFieldUpdate.class, field, entity);
+				AnnotationAndValue casHmacFFDeleteAnn = getPropertyAnnotation(CasHmacForeignFieldDelete.class, field, entity);
+				
+				// Process foreign key annotations.
+				if (returnValue && access.equals(CasHmacAccessLevels.CREATE) && casHmacFFCreateAnn != null)
+					if (!getForeignAcl(casHmacFFCreateAnn.getValue(), ((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).accessLevel()))
+						returnValue = false;
+				if (returnValue && access.equals(CasHmacAccessLevels.READ) && casHmacFFReadAnn != null)
+					if (!getForeignAcl(casHmacFFReadAnn.getValue(), ((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).accessLevel()))
+						returnValue = false;
+				if (returnValue && access.equals(CasHmacAccessLevels.UPDATE) && casHmacFFUpdateAnn != null) 
+					if (!getForeignAcl(casHmacFFUpdateAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateAnn.getAnnotation()).accessLevel()))
+						returnValue = false;
+				if (returnValue && access.equals(CasHmacAccessLevels.DELETE) && casHmacFFDeleteAnn != null)
+					if (!getForeignAcl(casHmacFFDeleteAnn.getValue(), ((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).accessLevel()))
+						returnValue = false;
+			}
+			
 			for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
 				// The next four annotations can be applied to any foreign key fields.
 				AnnotationAndValue casHmacFFCreateAnn = getPropertyAnnotation(CasHmacForeignFieldCreate.class, pd, entity);
@@ -168,26 +212,18 @@ public class CrudAclSearch {
 				AnnotationAndValue casHmacFFDeleteAnn = getPropertyAnnotation(CasHmacForeignFieldDelete.class, pd, entity);
 				
 				// Process foreign key annotations.
-				if (returnValue && access.equals(CasHmacAccessLevels.CREATE) && casHmacFFCreateAnn.getAnnotation() != null) {
-					CasHmacForeignFieldCreate ann = (CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation();
-					if (!getForeignAcl(casHmacFFUpdateAnn.getValue(), ann.accessLevel()))
+				if (returnValue && access.equals(CasHmacAccessLevels.CREATE) && casHmacFFCreateAnn != null)
+					if (!getForeignAcl(casHmacFFCreateAnn.getValue(), ((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).accessLevel()))
 						returnValue = false;
-				}
-				if (returnValue && access.equals(CasHmacAccessLevels.READ) && casHmacFFReadAnn.getAnnotation() != null) {
-					CasHmacForeignFieldRead ann = (CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation();
-					if (!getForeignAcl(casHmacFFUpdateAnn.getValue(), ann.accessLevel()))
+				if (returnValue && access.equals(CasHmacAccessLevels.READ) && casHmacFFReadAnn != null)
+					if (!getForeignAcl(casHmacFFReadAnn.getValue(), ((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).accessLevel()))
 						returnValue = false;
-				}
-				if (returnValue && access.equals(CasHmacAccessLevels.UPDATE) && casHmacFFUpdateAnn.getAnnotation() != null) { 
-					CasHmacForeignFieldUpdate ann = (CasHmacForeignFieldUpdate)casHmacFFUpdateAnn.getAnnotation();
-					if (!getForeignAcl(casHmacFFUpdateAnn.getValue(), ann.accessLevel()))
+				if (returnValue && access.equals(CasHmacAccessLevels.UPDATE) && casHmacFFUpdateAnn != null) 
+					if (!getForeignAcl(casHmacFFUpdateAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateAnn.getAnnotation()).accessLevel()))
 						returnValue = false;
-				}
-				if (returnValue && access.equals(CasHmacAccessLevels.DELETE) && casHmacFFDeleteAnn.getAnnotation() != null) {
-					CasHmacForeignFieldDelete ann = (CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation();
-					if (!getForeignAcl(casHmacFFUpdateAnn.getValue(), ann.accessLevel()))
+				if (returnValue && access.equals(CasHmacAccessLevels.DELETE) && casHmacFFDeleteAnn != null)
+					if (!getForeignAcl(casHmacFFDeleteAnn.getValue(), ((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).accessLevel()))
 						returnValue = false;
-				}
 			}
 		}		
 		
@@ -224,43 +260,68 @@ public class CrudAclSearch {
 	 * @param accessLevel
 	 * @return
 	 */
-	private Boolean getAcl(Object pkvalue, Class<?> objectClass, String accessLevel) {
+	private Boolean getAcl(String pkvalue, Class<?> objectClass, String accessLevel) {
 		// Return false by default (unless valid ACL is found).
 		Boolean returnValue = true;
 		
 		// Get user from session
 		User user = (User)CasHmacRequestFilter.getSession().getAttribute("user");
-		List<Role> roles = user.getRoles();
-		
-		// Get ACL from database.
-		List<ACL> acls = null;
-		try {
-			
-			acls = crudAclSearchFactory.getAclDao().findAcl(user.getName(), roles, accessLevel, objectClass, pkvalue);
-			if (acls.size() <= 0)
-				returnValue = false;
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
+
+		// Return false right away if user isn't found.
+		if (user == null) {
+			return false;
 		}
+		
+		
+		// Attempt to get ACL from cache
+		String key = "entity=" + pkvalue + ";class=" + objectClass.getName() + ";access=" + accessLevel + ";user=" + user.getName();
+		List<ACL> acls = crudAclSearchFactory.getCachedACLs(key);
 		
 		// Debug
-		String roleString = "";
-		for (Role role : roles) {
-			roleString += roleString.equals("") ? "[ " : ",";
-			roleString += role.getRole();
+		if (acls != null && DEBUG) {
+			System.out.println(
+					"\n" +
+					"--------------------- Retrieved Cached ACL ----------------------\n" +
+					"  Key: " + key + "\n" +
+					"-----------------------------------------------------------------\n" +
+					"\n");
 		}
-		System.out.println(
-				"\n" +
-				"-------------------------- Getting ACL --------------------------\n" +
-				"  Class:  " + objectClass.getName() + "\n" +
-				"  Access: " + accessLevel + "\n" +
-				"  Entity: " + pkvalue + "\n" +
-				"  User:   " + user.getName() + "\n" +
-				"  Roles:  " + roleString + " ]\n" +
-				"-----------------------------------------------------------------\n" +
-				"\n");
 		
+		// Get ACL from database.
+		if (acls == null) {
+			try {
+				acls = crudAclSearchFactory.getAclDao().findAcl(user.getName(), accessLevel, objectClass, pkvalue);
+				if (acls.size() <= 0)
+					returnValue = false;
+				else
+					crudAclSearchFactory.cacheACL(key, acls);
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			// Debug
+			if (DEBUG) {
+				String roleString = "";
+				for (Role role : user.getRoles()) {
+					roleString += roleString.equals("") ? "[ " : ",";
+					roleString += role.getRole();
+				}
+				System.out.println(
+						"\n" +
+						"-------------------------- Getting ACL --------------------------\n" +
+						"  Class:  " + objectClass.getName() + "\n" +
+						"  Access: " + accessLevel + "\n" +
+						"  Entity: " + pkvalue + "\n" +
+						"  User:   " + user.getName() + "\n" +
+						"  Roles:  " + roleString + " ]\n" +
+						"-----------------------------------------------------------------\n" +
+						"\n");
+			}
+		
+		}
+		
+		// Return true if an ACL was found, otherwise, return false.
 		return returnValue;
 	}
 	
@@ -272,15 +333,15 @@ public class CrudAclSearch {
 	 */
 	private class AnnotationAndValue {
 		private final Annotation annotation;
-		private final Object value;
-		public AnnotationAndValue(Annotation annotation, Object value) {
+		private final String value;
+		public AnnotationAndValue(Annotation annotation, String value) {
 			this.annotation = annotation;
 			this.value = value;
 		}
 		public Annotation getAnnotation() {
 			return this.annotation;
 		}
-		public Object getValue() {
+		public String getValue() {
 			return this.value;
 		}
 	}
@@ -296,23 +357,48 @@ public class CrudAclSearch {
 	 * @return
 	 */
 	private AnnotationAndValue getPropertyAnnotation(Class<? extends Annotation> annotationClass, PropertyDescriptor pd, Object entity) {
-		Annotation annotation = pd.getPropertyType().getAnnotation(annotationClass);
-		Object value = null;
-		if (annotation == null && pd.getReadMethod() != null) {
-			annotation = pd.getReadMethod().getAnnotation(annotationClass);
+		Annotation annotation = pd.getReadMethod().getAnnotation(annotationClass);
+		String value = null;
+		if (annotation != null) {
 			try {
-				value = (Object)pd.getReadMethod().invoke(entity, (Object[])null);
+				value = pd.getReadMethod().invoke(entity, (Object[])null).toString();
 			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
 			} catch (IllegalAccessException e) {
-				e.printStackTrace();
 			} catch (InvocationTargetException e) {
-				e.printStackTrace();
 			}
 		}
 		if (annotation == null && pd.getWriteMethod() != null)
 			annotation = pd.getWriteMethod().getAnnotation(annotationClass);
-		return new AnnotationAndValue(annotation, value);
+		if (annotation != null)
+			return new AnnotationAndValue(annotation, value);
+		else
+			return null;
 	}
-	
+
+	/**
+	 * Returns an annotation for a field.  It looks at the following items (in order) while attempting
+	 * to find the annotation:
+	 * 	1. Field
+	 *  2. Getter
+	 *  3. Setter
+	 * @param annotationClass
+	 * @param pd
+	 * @return
+	 */
+	private AnnotationAndValue getPropertyAnnotation(Class<? extends Annotation> annotationClass, Field field, Object entity) {
+		Annotation annotation = field.getAnnotation(annotationClass);
+		String value = null;
+		if (annotation != null) {
+			try {
+				value = field.get(entity).toString();
+			} catch (IllegalArgumentException e) {
+			} catch (IllegalAccessException e) {
+			}
+		}
+		if (annotation != null)
+			return new AnnotationAndValue(annotation, value);
+		else
+			return null;
+	}
+
 }

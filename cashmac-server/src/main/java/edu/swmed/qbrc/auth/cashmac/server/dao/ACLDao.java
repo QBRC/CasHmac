@@ -14,7 +14,12 @@ import edu.swmed.qbrc.auth.cashmac.server.data.ACL;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 
 public class ACLDao extends BaseDao<ACL> {
+
+	private static Boolean DEBUG = true;
 	
+	private final String roletable;
+	private final String roleUsernameCol;
+	private final String roleKeyCol;
 	private final String table;
 	private final String keycol;
 	private final String usernameCol;
@@ -27,6 +32,21 @@ public class ACLDao extends BaseDao<ACL> {
 	public ACLDao(final Map<String, String> servletConfig, final BasicDataSource dataSource) {
 		super(ACL.class, servletConfig, dataSource);
 
+		// Get Context Parameters for Role table
+    	String roletable = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.Role");
+    	if (roletable == null || roletable.equals("")) {
+    		roletable = ((TableName)Role.class.getAnnotation(TableName.class)).value();
+    	}
+    	String roleUsernameCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.usercol.Role");
+    	if (roleUsernameCol == null || roleUsernameCol.equals("")) {
+    		roleUsernameCol = "username";
+    	}
+    	String roleKeyCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.Role");
+    	if (roleKeyCol == null || roleKeyCol.equals("")) {
+    		roleKeyCol = "id";
+    	}
+
+		
 		// Get Context Parameters for ACL table information
     	String table = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.ACL");
     	if (table == null || table.equals("")) {
@@ -58,6 +78,9 @@ public class ACLDao extends BaseDao<ACL> {
     	}
 
     	// Initialize fields with properties from .properties file.
+    	this.roletable = roletable;
+    	this.roleUsernameCol = roleUsernameCol;
+    	this.roleKeyCol = roleKeyCol;
     	this.table = table;
     	this.keycol = keycol;
     	this.usernameCol = usernameCol;
@@ -68,7 +91,7 @@ public class ACLDao extends BaseDao<ACL> {
     }
 
     /* Load an ACL */
-    public List<ACL> findAcl(String username, List<Role> roles, String accessLevel, Class<?> objectClass, Object key) throws SQLException {
+    public List<ACL> findAcl(String username, String accessLevel, Class<?> objectClass, String key) throws SQLException {
 
         PreparedStatement stmt = null;
         Connection conn = null;
@@ -80,35 +103,34 @@ public class ACLDao extends BaseDao<ACL> {
 
             // Get connection
             conn = dataSource.getConnection();
-            
-            // Get an array of role ids
-            List<Integer> roleArray = new ArrayList<Integer>();
-            for (Role role : roles) {
-            	roleArray.add(role.getId());
-            }
 
             // Prepare query
-            stmt = conn.prepareStatement(
+            String sqlstmt = 
             		"SELECT * " +
             		"FROM " + table + " " +
             		"WHERE " +
             			"( 1=0 " +
             				"OR " + usernameCol + " = ? " +
-            				"OR " + roleCol     + " IN (?) " +
+            				"OR " + roleCol     + " IN ( " +
+            					"SELECT " + roleKeyCol + " FROM " + roletable + " " +
+            					"WHERE " + roleUsernameCol + " = ? " + 
+            				") " +
             			") " +
             			"AND " + classCol  + " = ? " +
             			"AND " + pkCol     + " = ? " +
-            			"AND " + accessCol + " = ? "
-            			
-            );
+            			"AND " + accessCol + " = ? ";
+            stmt = conn.prepareStatement(sqlstmt);
+            
             stmt.setString(1, username);
-            stmt.setObject(2, roleArray.toArray());
+            stmt.setObject(2, username);
             stmt.setString(3, objectClass.getName());
             stmt.setObject(4, key);
             stmt.setString(5, accessLevel);
 
             // Execute query
             rs = stmt.executeQuery();
+            if (DEBUG) 
+            	System.out.println(rs.getStatement());
 
             // If an ACL was found, load it.
             while (rs.next()) {
