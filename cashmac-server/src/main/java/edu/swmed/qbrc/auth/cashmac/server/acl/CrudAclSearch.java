@@ -54,7 +54,6 @@ public class CrudAclSearch {
 	 */
 	private Boolean findClassAcls(Object entity, String access) {
 		CasHmacObjectAcl casHmacObjectAcl = entity.getClass().getAnnotation(CasHmacObjectAcl.class);
-		CasHmacObjectCreate casHmacObjectCreate = entity.getClass().getAnnotation(CasHmacObjectCreate.class);
 		CasHmacObjectRead casHmacObjectRead = entity.getClass().getAnnotation(CasHmacObjectRead.class);
 		CasHmacObjectUpdate casHmacObjectUpdate = entity.getClass().getAnnotation(CasHmacObjectUpdate.class);
 		CasHmacObjectDelete casHmacObjectDelete = entity.getClass().getAnnotation(CasHmacObjectDelete.class);
@@ -71,10 +70,6 @@ public class CrudAclSearch {
 		 * Process CRUD ACLs for this object only if the class has an Object ACL.
 		 */
 		if (casHmacObjectAcl != null && casHmacPKFieldAnn != null) {
-			if (returnValue && access.equals(CasHmacAccessLevels.CREATE) && casHmacObjectCreate != null) {
-				if (! getAcl(casHmacPKFieldAnn.getValue(), casHmacObjectCreate.objectClass(), casHmacObjectCreate.accessLevel()))
-					returnValue = false;
-			}
 			if (returnValue && access.equals(CasHmacAccessLevels.READ) && casHmacObjectRead != null) {
 				if (! getAcl(casHmacPKFieldAnn.getValue(), casHmacObjectRead.objectClass(), casHmacObjectRead.accessLevel()))
 					returnValue = false;
