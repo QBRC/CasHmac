@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.log4j.Logger;
+
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
 import edu.swmed.qbrc.auth.cashmac.server.data.ACL;
@@ -15,7 +17,7 @@ import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 
 public class ACLDao extends BaseDao<ACL> {
 
-	private static Boolean DEBUG = true;
+	private static final Logger log = Logger.getLogger(ACLDao.class);
 	
 	private final String roletable;
 	private final String roleUsernameCol;
@@ -122,11 +124,10 @@ public class ACLDao extends BaseDao<ACL> {
             	stmt.setNull(2, java.sql.Types.INTEGER);
             stmt.setString(3, acl.getAccess());
             stmt.setString(4, acl.getObjectClass());
-            stmt.setString(5, acl.getObjectPK());
+            stmt.setObject(5, acl.getObjectPK());
 
             // Execute query
-            if (DEBUG) 
-            	System.out.println(sqlstmt);
+           	log.trace(sqlstmt + "[user=" + acl.getUsername() + ";role=" + acl.getRoleId() + ";access=" + acl.getAccess() + ";class=" + acl.getObjectClass() + ";pk=" + acl.getObjectPK() + "]");
             stmt.execute();
 
         } catch (SQLException e) {
@@ -144,7 +145,7 @@ public class ACLDao extends BaseDao<ACL> {
 	}
 	
     /* Load an ACL */
-    public List<ACL> findAcl(String username, String accessLevel, Class<?> objectClass, String key) throws SQLException {
+    public List<ACL> findAcl(String username, String accessLevel, Class<?> objectClass, Object key) throws SQLException {
 
         PreparedStatement stmt = null;
         Connection conn = null;
@@ -182,8 +183,7 @@ public class ACLDao extends BaseDao<ACL> {
 
             // Execute query
             rs = stmt.executeQuery();
-            if (DEBUG) 
-            	System.out.println(rs.getStatement());
+           	log.trace(rs.getStatement());
 
             // If an ACL was found, load it.
             while (rs.next()) {
@@ -209,7 +209,62 @@ public class ACLDao extends BaseDao<ACL> {
         return results;
     }    
 	
-	@Override
+    /* Load an ACL */
+    public List<ACL> findObjectAcls(Class<?> objectClass, Object key) throws SQLException {
+
+        PreparedStatement stmt = null;
+        Connection conn = null;
+        ResultSet rs = null;
+        List<ACL> results = new ArrayList<ACL>();
+        
+    	
+        try {
+
+            // Get connection
+            conn = dataSource.getConnection();
+
+            // Prepare query
+            String sqlstmt = 
+            		"SELECT * " +
+            		"FROM " + table + " " +
+            		"WHERE " +
+            			"1=1 " +
+            			"AND " + classCol  + " = ? " +
+            			"AND " + pkCol     + " = ? ";
+            stmt = conn.prepareStatement(sqlstmt);
+            
+            stmt.setString(1, objectClass.getName());
+            stmt.setObject(2, key);
+
+            // Execute query
+            rs = stmt.executeQuery();
+            log.trace(rs.getStatement());
+
+            // If an ACL was found, load it.
+            while (rs.next()) {
+            	results.add(setData(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database Error: " + e.getMessage());
+        } catch(Exception e) {
+            throw new RuntimeException("Exception: " + e.getMessage());
+        } finally {
+            if (rs != null) {
+                try {rs.close(); } catch (SQLException e) { throw e; }
+            }
+            if (stmt != null) {
+                try {stmt.close(); } catch (SQLException e) { throw e; }
+            }
+            if (conn != null) {
+                try {conn.close(); } catch (SQLException e) { throw e; }
+            }
+        }
+
+        return results;
+    }    
+
+    @Override
 	public ACL setData(ResultSet results) throws SQLException {
 		ACL toReturn = new ACL();
 		toReturn.setId(results.getInt(keycol));

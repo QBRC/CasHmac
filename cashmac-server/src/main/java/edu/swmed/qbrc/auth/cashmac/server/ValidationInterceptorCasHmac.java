@@ -9,6 +9,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
+
+import org.apache.log4j.Logger;
 import org.jboss.resteasy.annotations.interception.ServerInterceptor;
 import org.jboss.resteasy.core.ResourceMethod;
 import org.jboss.resteasy.core.ServerResponse;
@@ -27,12 +29,12 @@ import org.jasig.cas.client.util.CommonUtils;
 import org.jasig.cas.client.validation.Assertion;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import edu.swmed.qbrc.auth.cashmac.server.dao.UserDao;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 import edu.swmed.qbrc.auth.cashmac.server.guice.GuiceModule;
+import edu.swmed.qbrc.auth.cashmac.server.guice.MainGuiceModule;
 import edu.swmed.qbrc.auth.cashmac.shared.annotations.NoCasAuth;
 import edu.swmed.qbrc.auth.cashmac.shared.util.HMACUtils;
 
@@ -52,6 +54,8 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 
 	private static final String TICKET_PARAM_NAME = "ticket";
 	private static final String SERVICE_PARAM_NAME = "service";
+	
+	private static final Logger log = Logger.getLogger(ValidationInterceptorCasHmac.class);
 
 	private boolean isInjected = false;
 
@@ -78,9 +82,9 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 		 * Sets up the injector and inject self, if not already done.
 		 */
 		if (! isInjected) {
-			System.out.println("Initializing Guice Injector.");
-			Injector injector = Guice.createInjector(new GuiceModule(CasHmacRequestFilter.getConfig()));
-			injector.injectMembers(this);
+			log.info("Initializing Guice Injector.");
+			GuiceModule guiceModule = Guice.createInjector(MainGuiceModule.getModule()).getInstance(GuiceModule.class);
+			Guice.createInjector(guiceModule).injectMembers(this);
 			isInjected = true;
 		}
 

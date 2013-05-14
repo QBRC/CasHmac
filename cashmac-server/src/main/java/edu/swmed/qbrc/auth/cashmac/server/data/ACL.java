@@ -12,7 +12,7 @@ public class ACL implements BaseEntity {
     private Integer roleId;
     private String access;
     private String objectClass;
-    private String objectPK;
+    private Object objectPK;
     
     public ACL() {    	
 		this.setId(null);
@@ -20,7 +20,7 @@ public class ACL implements BaseEntity {
 		this.setRoleId(null);
     }
     
-	public ACL(Integer id, String username, Integer roleId, String access, String objectClass, String objectPK) {
+	public ACL(Integer id, String username, Integer roleId, String access, String objectClass, Object objectPK) {
 		super();
 		this.setId(id);
 		this.setUsername(username);
@@ -71,11 +71,11 @@ public class ACL implements BaseEntity {
 		this.objectClass = objectClass;
 	}
 
-	public String getObjectPK() {
+	public Object getObjectPK() {
 		return objectPK;
 	}
 
-	public void setObjectPK(String objectPK) {
+	public void setObjectPK(Object objectPK) {
 		this.objectPK = objectPK;
 	}
     

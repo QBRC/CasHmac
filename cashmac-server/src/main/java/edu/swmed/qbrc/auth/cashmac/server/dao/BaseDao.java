@@ -49,7 +49,6 @@ public abstract class BaseDao<T extends BaseEntity> {
 
             // Prepare query
             String sql = "select * from " + table + " where " + keycol + " = ?";
-            //System.out.println("BaseDao Statement: " + sql);
             stmt = conn.prepareStatement(sql);
             stmt.setObject(1, id);
 
@@ -78,6 +77,47 @@ public abstract class BaseDao<T extends BaseEntity> {
         }
 
         return result;
+    }
+    
+    public void delete(Object id) throws SQLException {
+        PreparedStatement stmt = null;
+        Connection conn = null;
+        
+        // Get Context Parameters for table information
+    	String table = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table." + clazz.getSimpleName());
+    	if (table == null || table.equals("")) {
+    		table = ((TableName)clazz.getAnnotation(TableName.class)).value();
+    	}
+    	String keycol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol." + clazz.getSimpleName());
+    	if (keycol == null || keycol.equals("")) {
+    		keycol = ((TableName)clazz.getAnnotation(TableName.class)).keycol();
+    	}
+
+        try {
+
+            // Get connection
+            conn = dataSource.getConnection();
+
+            // Prepare query
+            String sql = "delete from " + table + " where " + keycol + " = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setObject(1, id);
+            
+            // Execute query
+            stmt.execute();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database Error: " + e.getMessage());
+        } catch(Exception e) {
+            throw new RuntimeException("Exception: " + e.getMessage());
+        } finally {
+            if (stmt != null) {
+                try {stmt.close(); } catch (SQLException e) { throw e; }
+            }
+            if (conn != null) {
+                try {conn.close(); } catch (SQLException e) { throw e; }
+            }
+        }
     }    
     
 }

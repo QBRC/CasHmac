@@ -1,25 +1,30 @@
 package edu.swmed.qbrc.auth.cashmac.server.guice;
 
+import java.lang.annotation.Annotation;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
+import javax.persistence.EntityManager;
 import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-
 import edu.swmed.qbrc.auth.cashmac.server.acl.CrudAclSearchFactory;
+import edu.swmed.qbrc.auth.cashmac.shared.annotations.CasHmacEntityManagerMap;
 
 public class GuiceModule extends AbstractModule {
 	
 	private final Map<String, String> servletConfig;
+	private final MainGuiceModule mainGuiceModule;
 	
-	public GuiceModule(Map<String, String> servletConfig) {
+	public GuiceModule(Map<String, String> servletConfig, MainGuiceModule mainGuiceModule) {
 		this.servletConfig = servletConfig;
+		this.mainGuiceModule = mainGuiceModule;
 	}
 	
 	@Override
@@ -27,6 +32,7 @@ public class GuiceModule extends AbstractModule {
 		Names.bindProperties(binder(), loadProperties());
 		bind(BasicDataSource.class).toProvider(DBConnectionPool.class).in(Singleton.class);
 		bind(CrudAclSearchFactory.class).in(Singleton.class);
+		bind(new TypeLiteral<Map<Class <? extends Annotation>, Provider<EntityManager>>>(){}).annotatedWith(CasHmacEntityManagerMap.class).toInstance(mainGuiceModule.getEntityManagerProviderMap());
 	}
 
 	@Provides

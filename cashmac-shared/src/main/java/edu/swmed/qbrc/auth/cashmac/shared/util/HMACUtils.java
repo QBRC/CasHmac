@@ -9,11 +9,14 @@ import java.util.TreeMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
+import org.jboss.logging.Logger;
 import org.jboss.resteasy.client.ClientRequest;
 import org.jboss.resteasy.spi.HttpRequest;
 
 public class HMACUtils {
  
+	private static final Logger log = Logger.getLogger(HMACUtils.class);
+	
 	private final static String HMAC_SHA1_ALGORITHM = "HmacSHA1";
  
 	/**
@@ -63,7 +66,7 @@ public class HMACUtils {
 		// Query String
 		s.append(buildSortedQueryString(request));
 
-		System.out.println("HMAC to Sign: " + s.toString());
+		log.trace("HMAC to Sign: " + s.toString());
 		
 		// Return value
 		return s.toString();
@@ -109,7 +112,7 @@ public class HMACUtils {
 		// Query String
 		s.append(buildSortedQueryString(request));
 
-		System.out.println("HMAC to Sign: " + s.toString());
+		//log.trace("HMAC to Sign: " + s.toString());
 
 		// Return value
 		return s.toString();
@@ -144,7 +147,7 @@ public class HMACUtils {
 		// Query String
 		s.append(buildSortedQueryString(request));
 
-		System.out.println("HMAC to Sign: " + s.toString());
+		log.trace("HMAC to Sign: " + s.toString());
 
 		// Return value
 		return s.toString();

@@ -1,5 +1,6 @@
 package edu.swmed.qbrc.auth.cashmac.shared.annotations;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -7,4 +8,5 @@ import java.lang.annotation.RetentionPolicy;
 public @interface CasHmacForeignFieldRead {
 	String accessLevel();
 	Class<?> objectClass();	
+	Class<? extends Annotation> foreignEntityManager();
 }

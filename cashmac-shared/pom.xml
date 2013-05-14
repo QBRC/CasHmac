@@ -26,6 +26,7 @@
 		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
 		<maven-war-plugin.version>2.2</maven-war-plugin.version>
 		<resteasy.version>2.3.5.Final</resteasy.version>
+        <hibernate.version>4.1.4.Final</hibernate.version>
 	</properties>
 
 	<dependencies>
@@ -56,7 +57,13 @@
             <version>${guice.version}</version>
         </dependency>
 		
-
+        <!-- Hibernate framework -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
+        </dependency>
+        
 	</dependencies>
 	<build>
 
