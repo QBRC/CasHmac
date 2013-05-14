@@ -22,6 +22,19 @@ public class CrudAclSearch {
 	private AnnotationAndValue casHmacWriteAclAnn = null;
 
 	/**
+	 * Returns a new search that is marked as having all necessary ACLs, but
+	 * without actually searching for ACLs.  This is used by CrudAclSearchFactory
+	 * when a PreAuth has been run successfully, in which case we don't need any
+	 * further checks.
+	 * @param ok
+	 */
+	public CrudAclSearch(Boolean ok) {
+		this.crudAclSearchFactory = null;
+		this.entityManagerAnnotation = null;
+		this.hasNeccessaryAcl = ok;
+	}
+	
+	/**
 	 * Instantiate a new search for a primary object.
 	 * @param crudAclSearchFactory
 	 * @param entity
@@ -267,7 +280,7 @@ public class CrudAclSearch {
 					if (!getForeignAcl(((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).objectClass(), casHmacFFUpdatePreAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).foreignEntityManager()))
 						returnValue = false;
 				if (returnValue && casHmacFFUpdateNowAnn != null) 
-					if (!getForeignAcl(((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).objectClass(), casHmacFFUpdateNowAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).foreignEntityManager()))
+					if (!getForeignAcl(((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).objectClass(), casHmacFFUpdateNowAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).foreignEntityManager()))
 						returnValue = false;
 			}
 			

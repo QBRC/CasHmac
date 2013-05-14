@@ -11,9 +11,9 @@ import edu.swmed.qbrc.auth.cashmac.server.data.ACL;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
-import edu.swmed.qbrc.auth.cashmac.server.hibernate.exceptions.AclDeleteException;
-import edu.swmed.qbrc.auth.cashmac.server.hibernate.exceptions.BadAclRoleException;
-import edu.swmed.qbrc.auth.cashmac.server.hibernate.exceptions.NoAclException;
+import edu.swmed.qbrc.auth.cashmac.shared.exceptions.AclDeleteException;
+import edu.swmed.qbrc.auth.cashmac.shared.exceptions.BadAclRoleException;
+import edu.swmed.qbrc.auth.cashmac.shared.exceptions.NoAclException;
 
 public class CasHmacValidation {
 	

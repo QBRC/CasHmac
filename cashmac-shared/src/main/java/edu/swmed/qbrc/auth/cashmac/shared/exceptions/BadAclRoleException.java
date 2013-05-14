@@ -1,4 +1,4 @@
-package edu.swmed.qbrc.auth.cashmac.server.hibernate.exceptions;
+package edu.swmed.qbrc.auth.cashmac.shared.exceptions;
 
 import org.hibernate.CallbackException;
 

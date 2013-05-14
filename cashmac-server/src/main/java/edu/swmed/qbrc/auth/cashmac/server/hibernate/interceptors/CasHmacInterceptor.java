@@ -13,8 +13,8 @@ import edu.swmed.qbrc.auth.cashmac.server.dao.UserDao;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 import edu.swmed.qbrc.auth.cashmac.server.guice.GuiceModule;
 import edu.swmed.qbrc.auth.cashmac.server.guice.MainGuiceModule;
-import edu.swmed.qbrc.auth.cashmac.server.hibernate.exceptions.NoAclException;
 import edu.swmed.qbrc.auth.cashmac.shared.constants.CasHmacAccessLevels;
+import edu.swmed.qbrc.auth.cashmac.shared.exceptions.NoAclException;
 
 /**
  * Here we intercept Hibernate events. These are all "pre" interceptors, meaning that
