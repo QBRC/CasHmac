@@ -76,10 +76,17 @@ public class CasHmacInterceptor extends EmptyInterceptor {
 	@Override
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState, String[] propertyNames, Type[] types) {
 		log.trace("Updated: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId());
-		CrudAclSearch acl = crudAclSearchFactory.find(entity, id, CasHmacAccessLevels.UPDATE, currentState, previousState, propertyNames);
-		if (acl.getHasNeccessaryAcl()) {
+		CrudAclSearch acl = null;
+		try {
+			acl = crudAclSearchFactory.find(entity, id, CasHmacAccessLevels.UPDATE, currentState, previousState, propertyNames);
+		} catch (NoAclException e) {
+			log.trace("Error: NoAclException while looking up ACLs for " + entity.getClass().getSimpleName() + " " + id);
+			throw e;
+		}
+		if (acl != null && acl.getHasNeccessaryAcl()) {
 			return super.onFlushDirty(entity, id, currentState, previousState, propertyNames, types);
 		} else {
+			log.trace("Error: unable to update entity " + entity.getClass().getSimpleName() + " " + id);
 			throw new NoAclException("No ACL to update entity of type " + entity.getClass().getSimpleName());
 		}
 	}

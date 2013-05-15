@@ -3,9 +3,7 @@ package edu.swmed.qbrc.auth.cashmac.server.acl;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import javax.persistence.EntityManager;
-
 import org.apache.log4j.Logger;
-
 import edu.swmed.qbrc.auth.cashmac.shared.annotations.*;
 import edu.swmed.qbrc.auth.cashmac.shared.constants.CasHmacAccessLevels;
 
@@ -98,15 +96,19 @@ public class CrudAclSearch {
 	 * @param access
 	 */
 	private Boolean searchForAcl(Object entity, Object id, String access, Object[] currentState, Object[] previousState, String[] propertyNames) {
-		return
+		Boolean retval =
 				findClassAcls(entity, id, access, currentState, previousState, propertyNames) &&
 				findForeignKeyAcls(entity, id, access, currentState, previousState, propertyNames);
+		log.trace("searchForAcl(" + entity.getClass().getSimpleName() + " " + id + " returned " + retval.toString());
+		return retval;
 	}
 	
 	private Boolean searchForForeignAcl(Object entity, Object id, String access, Class<? extends Annotation> entityManagerAnnotation) {
-		return
+		Boolean retval =
 				findClassAcls(entity, id, access, null, null, null) &&
 				findForeignKeyAcls(entity, id.toString(), access, null, null, null);
+		log.trace("searchForForeignAcl(" + entity.getClass().getSimpleName() + " " + id + " returned " + retval.toString());
+		return retval;
 	}
 	
 	/**
@@ -158,8 +160,14 @@ public class CrudAclSearch {
 		// Load entity, if necessary
 		if (this.entityManagerAnnotation != null) {
 			EntityManager em = this.crudAclSearchFactory.getEntityManager(this.entityManagerAnnotation);
-			entity = em.find(entity.getClass(), id);
-			log.debug("============= Loaded entity of class " + entity.getClass().getSimpleName() + " with id " + id.toString());
+			try {
+				entity = em.find(entity.getClass(), id);
+				log.trace("============= Loaded entity of class " + entity.getClass().getSimpleName() + " with id " + id.toString());
+			} catch (Exception e) {
+				log.trace("============= Unable to load entity " + entity.getClass().getSimpleName() + " with id " + id.toString());
+				log.trace("Error:\n" + e.getMessage());
+				return false;
+			}
 		}
 		
 		CasHmacObjectAcl casHmacObjectAcl = entity.getClass().getAnnotation(CasHmacObjectAcl.class);
@@ -256,40 +264,45 @@ public class CrudAclSearch {
 		Boolean returnValue = true;
 		
 		for (Field field : entity.getClass().getDeclaredFields()) {
-			log.trace("-------------- Checking foreign field for " + entity.getClass().getSimpleName() + "." + field.getName() + " ---------------");
 			
-			if (access.equals(CasHmacAccessLevels.CREATE)) {
-				AnnotationAndValue casHmacFFCreateAnn = getPropertyAnnotation(CasHmacForeignFieldCreate.class, field, entity, id, currentState, propertyNames);
-				if (returnValue && casHmacFFCreateAnn != null)
-					if (!getForeignAcl(((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).objectClass(), casHmacFFCreateAnn.getValue(), ((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).foreignEntityManager()))
-						returnValue = false;
-			}
+			if (returnValue) {
 			
-			else if (access.equals(CasHmacAccessLevels.READ)) {
-				AnnotationAndValue   casHmacFFReadAnn = getPropertyAnnotation(CasHmacForeignFieldRead.class,   field, entity, id, currentState, propertyNames);
-				if (returnValue && casHmacFFReadAnn != null) {
-					if (!getForeignAcl(((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).objectClass(), casHmacFFReadAnn.getValue(), ((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).foreignEntityManager()))
-						returnValue = false;
+				log.trace("-------------- Checking foreign field for " + entity.getClass().getSimpleName() + "." + field.getName() + " ---------------");
+				
+				if (access.equals(CasHmacAccessLevels.CREATE)) {
+					AnnotationAndValue casHmacFFCreateAnn = getPropertyAnnotation(CasHmacForeignFieldCreate.class, field, entity, id, currentState, propertyNames);
+					if (returnValue && casHmacFFCreateAnn != null)
+						if (!getForeignAcl(((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).objectClass(), casHmacFFCreateAnn.getValue(), ((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldCreate)casHmacFFCreateAnn.getAnnotation()).foreignEntityManager()))
+							returnValue = false;
 				}
-			}
-			
-			else if (access.equals(CasHmacAccessLevels.UPDATE)) {
-				AnnotationAndValue casHmacFFUpdatePreAnn = getPropertyAnnotation(CasHmacForeignFieldUpdate.class, field, entity, id, previousState, propertyNames);
-				AnnotationAndValue casHmacFFUpdateNowAnn = getPropertyAnnotation(CasHmacForeignFieldUpdate.class, field, entity, id, currentState, propertyNames);
-				if (returnValue && casHmacFFUpdatePreAnn != null) 
-					if (!getForeignAcl(((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).objectClass(), casHmacFFUpdatePreAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).foreignEntityManager()))
-						returnValue = false;
-				if (returnValue && casHmacFFUpdateNowAnn != null) 
-					if (!getForeignAcl(((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).objectClass(), casHmacFFUpdateNowAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).foreignEntityManager()))
-						returnValue = false;
-			}
-			
-			else if (access.equals(CasHmacAccessLevels.DELETE)) {
-				AnnotationAndValue casHmacFFDeleteAnn = getPropertyAnnotation(CasHmacForeignFieldDelete.class, field, entity, id, currentState, propertyNames);
-				if (returnValue && casHmacFFDeleteAnn != null)
-					if (!getForeignAcl(((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).objectClass(), casHmacFFDeleteAnn.getValue(), ((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).foreignEntityManager()))
-						returnValue = false;
-			}
+				
+				else if (access.equals(CasHmacAccessLevels.READ)) {
+					AnnotationAndValue   casHmacFFReadAnn = getPropertyAnnotation(CasHmacForeignFieldRead.class,   field, entity, id, currentState, propertyNames);
+					if (returnValue && casHmacFFReadAnn != null) {
+						if (!getForeignAcl(((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).objectClass(), casHmacFFReadAnn.getValue(), ((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldRead)casHmacFFReadAnn.getAnnotation()).foreignEntityManager()))
+							returnValue = false;
+					}
+				}
+				
+				else if (access.equals(CasHmacAccessLevels.UPDATE)) {
+					AnnotationAndValue casHmacFFUpdatePreAnn = getPropertyAnnotation(CasHmacForeignFieldUpdate.class, field, entity, id, previousState, propertyNames);
+					AnnotationAndValue casHmacFFUpdateNowAnn = getPropertyAnnotation(CasHmacForeignFieldUpdate.class, field, entity, id, currentState, propertyNames);
+					if (returnValue && casHmacFFUpdatePreAnn != null) 
+						if (!getForeignAcl(((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).objectClass(), casHmacFFUpdatePreAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldUpdate)casHmacFFUpdatePreAnn.getAnnotation()).foreignEntityManager()))
+							returnValue = false;
+					if (returnValue && casHmacFFUpdateNowAnn != null) 
+						if (!getForeignAcl(((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).objectClass(), casHmacFFUpdateNowAnn.getValue(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldUpdate)casHmacFFUpdateNowAnn.getAnnotation()).foreignEntityManager()))
+							returnValue = false;
+				}
+				
+				else if (access.equals(CasHmacAccessLevels.DELETE)) {
+					AnnotationAndValue casHmacFFDeleteAnn = getPropertyAnnotation(CasHmacForeignFieldDelete.class, field, entity, id, currentState, propertyNames);
+					if (returnValue && casHmacFFDeleteAnn != null)
+						if (!getForeignAcl(((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).objectClass(), casHmacFFDeleteAnn.getValue(), ((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).accessLevel(), ((CasHmacForeignFieldDelete)casHmacFFDeleteAnn.getAnnotation()).foreignEntityManager()))
+							returnValue = false;
+				}
+				
+			} // End if (returnValue)
 		}
 		
 		return returnValue;
@@ -319,6 +332,7 @@ public class CrudAclSearch {
 			}
 
 			if (newEntity != null) {
+				log.trace("About to look up Foreign ACL for: " + foreignClass.getSimpleName() + " - " + accessLevel + ": " + foreignValue);
 				CrudAclSearch subAcl = crudAclSearchFactory.find(newEntity, foreignValue, accessLevel, entityManagerAnnotation);
 				log.trace("Looked up Foreign ACL for: " + foreignClass.getSimpleName() + " - " + accessLevel + ": " + foreignValue + " = " + subAcl.hasNeccessaryAcl);
 				if (! subAcl.getHasNeccessaryAcl())
