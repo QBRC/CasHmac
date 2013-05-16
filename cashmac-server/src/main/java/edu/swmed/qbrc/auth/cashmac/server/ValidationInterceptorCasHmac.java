@@ -126,7 +126,7 @@ public class ValidationInterceptorCasHmac implements PreProcessInterceptor, Acce
 
 							// Check to see if the user has the role (allow any authenticated user if no role specified).
 							if (checkRoles(user.getRoles(), roles)) {
-								CasHmacRequestFilter.getSession().setAttribute("user", user);
+								CasHmacRequestFilter.getRequest().setAttribute("user", user);
 								return null;
 							}
 							

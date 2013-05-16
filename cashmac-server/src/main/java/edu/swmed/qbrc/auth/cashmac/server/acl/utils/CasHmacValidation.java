@@ -64,7 +64,7 @@ public class CasHmacValidation {
 		Boolean returnValue = true;
 		
 		// Get user from session
-		User user = (User)CasHmacRequestFilter.getSession().getAttribute("user");
+		User user = (User)CasHmacRequestFilter.getRequest().getAttribute("user");
 
 		// Return false right away if user isn't found.
 		if (user == null) {
@@ -136,7 +136,7 @@ public class CasHmacValidation {
 	 */
 	public void addAcl(String access, Class<?> objectClass, Object pkValue, String[] roles) {
 		// Get user from session
-		User user = (User)CasHmacRequestFilter.getSession().getAttribute("user");
+		User user = (User)CasHmacRequestFilter.getRequest().getAttribute("user");
 			
 		// If no role exist, insert "SELF"
 		String[] rolesToAdd = { "SELF" };
@@ -194,7 +194,7 @@ public class CasHmacValidation {
 	 */
 	public void deleteAcl(String access, Class<?> objectClass, Object pkValue, String[] roles) {
 		// Get user from session
-		User user = (User)CasHmacRequestFilter.getSession().getAttribute("user");
+		User user = (User)CasHmacRequestFilter.getRequest().getAttribute("user");
 			
 		// If no role exist, insert "SELF"
 		String[] rolesToDelete = { "SELF" };
