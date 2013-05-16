@@ -205,7 +205,7 @@ public class CasHmacValidation {
 		// Get ACL from database.
 		List<ACL> acls = null;
 		try {
-			acls = aclDao.findAcl(user.getName(), access, objectClass, pkValue);
+			acls = aclDao.findAclNonUserSpecific(access, objectClass, pkValue);
 		} catch (SQLException e) {
 			throw new AclDeleteException("Unable to delete ACL: " + e.getMessage());
 		}
@@ -220,11 +220,11 @@ public class CasHmacValidation {
 		for (String role : rolesToDelete) {
 			
 			// If dealing with user's own ACL
-			if (role.equals("SELF")) {
+			if (role.trim().equals("SELF")) {
 				// Loop through all ACLs found
 				for (ACL acl : acls) {
 					// Find ACLs for the current user
-					if (acl.getUsername().equals(user.getId())) {
+					if (acl.getUsername() != null && acl.getUsername().equals(user.getId())) {
 						// Delete Matched ACL
 						try {
 							aclDao.delete(acl.getId());
@@ -240,7 +240,7 @@ public class CasHmacValidation {
 				// Load role
 				Role daoRole;
 				try {
-					daoRole = roleDao.findByRoleName(role);
+					daoRole = roleDao.findByRoleName(role.trim());
 				} catch (SQLException e) {
 					throw new AclDeleteException("Unable to delete ACL: " + e.getMessage());
 				}

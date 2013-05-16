@@ -209,6 +209,62 @@ public class ACLDao extends BaseDao<ACL> {
         return results;
     }    
 	
+    /* Load ACLs (but don't consider user/role) */
+    public List<ACL> findAclNonUserSpecific(String accessLevel, Class<?> objectClass, Object key) throws SQLException {
+
+        PreparedStatement stmt = null;
+        Connection conn = null;
+        ResultSet rs = null;
+        List<ACL> results = new ArrayList<ACL>();
+        
+    	
+        try {
+
+            // Get connection
+            conn = dataSource.getConnection();
+
+            // Prepare query
+            String sqlstmt = 
+            		"SELECT * " +
+            		"FROM " + table + " " +
+            		"WHERE 1=1 " +
+            			"AND " + classCol  + " = ? " +
+            			"AND " + pkCol     + " = ? " +
+            			"AND " + accessCol + " = ? ";
+            stmt = conn.prepareStatement(sqlstmt);
+            
+            stmt.setString(1, objectClass.getName());
+            stmt.setObject(2, key);
+            stmt.setString(3, accessLevel);
+
+            // Execute query
+            rs = stmt.executeQuery();
+           	log.trace(rs.getStatement());
+
+            // If an ACL was found, load it.
+            while (rs.next()) {
+            	results.add(setData(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database Error: " + e.getMessage());
+        } catch(Exception e) {
+            throw new RuntimeException("Exception: " + e.getMessage());
+        } finally {
+            if (rs != null) {
+                try {rs.close(); } catch (SQLException e) { throw e; }
+            }
+            if (stmt != null) {
+                try {stmt.close(); } catch (SQLException e) { throw e; }
+            }
+            if (conn != null) {
+                try {conn.close(); } catch (SQLException e) { throw e; }
+            }
+        }
+
+        return results;
+    }    
+
     /* Load an ACL */
     public List<ACL> findObjectAcls(Class<?> objectClass, Object key) throws SQLException {
 
