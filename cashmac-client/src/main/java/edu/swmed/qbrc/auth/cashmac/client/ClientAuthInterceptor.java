@@ -13,27 +13,22 @@ import edu.swmed.qbrc.auth.cashmac.shared.util.HMACUtils;
 public class ClientAuthInterceptor implements ClientExecutionInterceptor {
 
 	String hostName = null;
-	String clientId = null;
-	String secret = null;
+	CasHmacRestProvider<?> provider = null;
 	
 	@SuppressWarnings("rawtypes")
 	public ClientResponse execute(ClientExecutionContext context) throws Exception {
 		
-		HMACUtils.createSignatureAndSignRequest(context.getRequest(), hostName, clientId, secret);
+		HMACUtils.createSignatureAndSignRequest(context.getRequest(), hostName, provider.getClientId(), provider.getSecret());
 
 		return context.proceed();
+	}
+
+	public void setProvider(CasHmacRestProvider<?> provider) {
+		this.provider = provider;
 	}
 	
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
-	}
-	
-	public void setClientId(String clientId) {
-		this.clientId = clientId;
-	}
-	
-	public void setSecret(String secret) {
-		this.secret = secret;
 	}
 
 }

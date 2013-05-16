@@ -2,13 +2,9 @@ package edu.swmed.qbrc.auth.cashmac.server.dao;
 
 import java.sql.SQLException;
 import java.sql.ResultSet;
-
-import javax.servlet.ServletConfig;
-
+import java.util.Map;
 import org.apache.commons.dbcp.BasicDataSource;
-
 import com.google.inject.Inject;
-
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
@@ -18,7 +14,7 @@ public class UserDao extends BaseDao<User> {
 	private final RoleDao roleDao;
 	
 	@Inject
-	public UserDao(RoleDao roleDao, final ServletConfig servletConfig, final BasicDataSource dataSource) {
+	public UserDao(RoleDao roleDao, final Map<String, String> servletConfig, final BasicDataSource dataSource) {
 		super(User.class, servletConfig, dataSource);
 		this.roleDao = roleDao;
     }
@@ -37,11 +33,11 @@ public class UserDao extends BaseDao<User> {
 	@Override
 	public User setData(ResultSet results) throws SQLException {
         // Get Context Parameters for Role table information
-    	String keycol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.User");
+    	String keycol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.User");
     	if (keycol == null || keycol.equals("")) {
     		keycol = ((TableName)Role.class.getAnnotation(TableName.class)).keycol();
     	}
-    	String secretCol = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.table.secretCol.User");
+    	String secretCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.secretCol.User");
     	if (secretCol == null || secretCol.equals("")) {
     		secretCol = "secret";
     	}

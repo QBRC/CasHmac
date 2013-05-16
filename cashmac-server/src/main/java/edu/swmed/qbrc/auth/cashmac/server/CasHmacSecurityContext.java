@@ -1,9 +1,7 @@
 package edu.swmed.qbrc.auth.cashmac.server;
 
 import java.security.Principal;
-
 import javax.ws.rs.core.SecurityContext;
-
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
 import edu.swmed.qbrc.auth.cashmac.server.data.User;
 

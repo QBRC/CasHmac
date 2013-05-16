@@ -1,35 +1,42 @@
 package edu.swmed.qbrc.auth.cashmac.server.guice;
 
+import java.lang.annotation.Annotation;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Properties;
-import javax.servlet.ServletConfig;
+import javax.persistence.EntityManager;
 import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import edu.swmed.qbrc.auth.cashmac.server.acl.CrudAclSearchFactory;
+import edu.swmed.qbrc.auth.cashmac.shared.annotations.CasHmacEntityManagerMap;
 
 public class GuiceModule extends AbstractModule {
 	
-	private final ServletConfig servletConfig;
+	private final Map<String, String> servletConfig;
+	private final MainGuiceModule mainGuiceModule;
 	
-	public GuiceModule(ServletConfig servletConfig) {
+	public GuiceModule(Map<String, String> servletConfig, MainGuiceModule mainGuiceModule) {
 		this.servletConfig = servletConfig;
+		this.mainGuiceModule = mainGuiceModule;
 	}
 	
 	@Override
 	protected void configure() {
-		//JpaPersistModule jpa = new JpaPersistModule(getPersistenceUnit());
-		//install(new JpaPersistModule(getPersistenceUnit()));
 		Names.bindProperties(binder(), loadProperties());
-		bind(BasicDataSource.class).toProvider(DBConnectionPool.class).in(Scopes.SINGLETON);
+		bind(BasicDataSource.class).toProvider(DBConnectionPool.class).in(Singleton.class);
+		bind(CrudAclSearchFactory.class).in(Singleton.class);
+		bind(new TypeLiteral<Map<Class <? extends Annotation>, Provider<EntityManager>>>(){}).annotatedWith(CasHmacEntityManagerMap.class).toInstance(mainGuiceModule.getEntityManagerProviderMap());
 	}
 
 	@Provides
-	ServletConfig provideServletConfig() {
+	Map<String, String> provideServletConfig() {
 		return this.servletConfig;
 	}
 	
@@ -65,19 +72,19 @@ public class GuiceModule extends AbstractModule {
 	
 	private Properties loadProperties() {
     	// Get context parameters for JDBC connection information
-    	String driver = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.jdbcdriver");
+    	String driver = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.jdbcdriver");
     	if (driver == null || driver.equals("")) {
     		driver = "org.h2.Driver";
     	}
-    	String url = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.jdbcurl");
+    	String url = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.jdbcurl");
     	if (url == null || url.equals("")) {
     		url = "jdbc:h2:~/cashmacSampleServerDB";
     	}
-    	String user = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.username");
+    	String user = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.username");
     	if (user == null || user.equals("")) {
     		user = "sa";
     	}
-    	String password = servletConfig.getServletContext().getInitParameter("edu.swmed.qbrc.auth.cashmac.hmac.password");
+    	String password = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.password");
     	if (password == null || password.equals("")) {
     		password = "";
     	}
@@ -91,6 +98,5 @@ public class GuiceModule extends AbstractModule {
     	return props;
 
 	}
-	
 	
 }
