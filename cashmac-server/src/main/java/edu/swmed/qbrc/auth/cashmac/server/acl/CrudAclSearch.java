@@ -13,7 +13,7 @@ public class CrudAclSearch {
 	
 	private final CrudAclSearchFactory crudAclSearchFactory;
 	private final Boolean hasNeccessaryAcl;
-	private final Class<? extends Annotation> entityManagerAnnotation;	
+	private final Class<? extends Annotation> entityManagerAnnotation;
 	
 	// The two following annotations are expected only once per class.
 	private AnnotationAndValue casHmacPKFieldAnn = null;
@@ -59,7 +59,7 @@ public class CrudAclSearch {
 	public CrudAclSearch(CrudAclSearchFactory crudAclSearchFactory, Object entity, Object id, String access, Class<? extends Annotation> entityManagerAnnotation) {
 		this.crudAclSearchFactory = crudAclSearchFactory; 
 		this.entityManagerAnnotation = entityManagerAnnotation;
-		this.hasNeccessaryAcl = searchForForeignAcl(entity, id, access, entityManagerAnnotation);
+		this.hasNeccessaryAcl = searchForForeignAcl(entity, id, access);
 	}
 
 	/**
@@ -103,7 +103,7 @@ public class CrudAclSearch {
 		return retval;
 	}
 	
-	private Boolean searchForForeignAcl(Object entity, Object id, String access, Class<? extends Annotation> entityManagerAnnotation) {
+	private Boolean searchForForeignAcl(Object entity, Object id, String access) {
 		Boolean retval =
 				findClassAcls(entity, id, access, null, null, null) &&
 				findForeignKeyAcls(entity, id.toString(), access, null, null, null);
@@ -158,7 +158,7 @@ public class CrudAclSearch {
 		Boolean returnValue = true;
 
 		// Load entity, if necessary
-		if (this.entityManagerAnnotation != null) {
+		if (this.entityManagerAnnotation != null && needsEntityLoad(entity)) {
 			EntityManager em = this.crudAclSearchFactory.getEntityManager(this.entityManagerAnnotation);
 			try {
 				entity = em.find(entity.getClass(), id);
@@ -169,7 +169,8 @@ public class CrudAclSearch {
 				return false;
 			}
 		}
-		
+
+		// Are ACLs stored for this object?
 		CasHmacObjectAcl casHmacObjectAcl = entity.getClass().getAnnotation(CasHmacObjectAcl.class);
 		
 		// Initialize fields
@@ -216,6 +217,27 @@ public class CrudAclSearch {
 		}
 		
 		return returnValue;
+	}
+	
+	/**
+	 * Searches an entity for any @CasHmacForeignField**** annotations and returns
+	 * true if any are found.  Otherwise, returns false.
+	 * 
+	 * @param entity
+	 * @return
+	 */
+	private Boolean needsEntityLoad(Object entity) {
+		for (Field field : entity.getClass().getDeclaredFields()) {
+			if (field.isAnnotationPresent(CasHmacForeignFieldRead.class))
+				return true;
+			else if (field.isAnnotationPresent(CasHmacForeignFieldUpdate.class))
+				return true;
+			else if (field.isAnnotationPresent(CasHmacForeignFieldDelete.class))
+				return true;
+			else if (field.isAnnotationPresent(CasHmacForeignFieldCreate.class))
+				return true;
+		}
+		return false;
 	}
 	
 	/**
