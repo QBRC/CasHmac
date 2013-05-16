@@ -42,6 +42,7 @@ public class CrudAclSearchFactory {
 	}
 	
 	public CrudAclSearch find(Object entity, Serializable id, String access, Object[] currentState, Object[] previousState, String[] propertyNames) {
+		resetRequestCache();
 		if (this.checkForPreAuth()) 
 			return new CrudAclSearch(true);
 		else
@@ -62,6 +63,22 @@ public class CrudAclSearchFactory {
 		} catch (Exception e) {}
 		
 		return retval; 
+	}
+	
+	private void resetRequestCache() {
+		// Reset CasHmac ACL cache once for each request
+		Boolean isReset = false;
+		try {
+			isReset = (Boolean)CasHmacRequestFilter.getRequest().getAttribute("CasHmacValidation.cacheReset");
+			if (isReset == null) 
+				isReset = false;
+		} catch (Exception e) {}
+		
+		// Reset
+		if (!isReset) {
+			this.aclCache.clear();
+			CasHmacRequestFilter.getRequest().setAttribute("CasHmacValidation.cacheReset", true);
+		}
 	}
 
 	public CrudAclSearch addAcl(Object entity, Serializable id) {
