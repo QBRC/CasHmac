@@ -398,6 +398,7 @@ public class CrudAclSearch {
 	 */
 	private AnnotationAndValue getPropertyAnnotation(Class<? extends Annotation> annotationClass, Field field, Object entity, Object id, Object[] state, String[] propertyNames) {
 		Annotation annotation = field.getAnnotation(annotationClass);
+		field.setAccessible(true); // Make field accessible (if it's private)
 		if (annotation != null)
 			if (annotation instanceof CasHmacPKField && id != null)
 				return new AnnotationAndValue(annotation, id);
