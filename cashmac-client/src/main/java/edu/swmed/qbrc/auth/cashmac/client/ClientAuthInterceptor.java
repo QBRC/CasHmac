@@ -1,26 +1,24 @@
 package edu.swmed.qbrc.auth.cashmac.client;
 
+import java.io.IOException;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.ext.Provider;
-import org.jboss.resteasy.client.ClientResponse;
-import org.jboss.resteasy.spi.interception.ClientExecutionContext;
-import org.jboss.resteasy.spi.interception.ClientExecutionInterceptor;
-import org.jboss.resteasy.annotations.interception.ClientInterceptor;
-
 import edu.swmed.qbrc.auth.cashmac.shared.util.HMACUtils;
 
 @Provider
-@ClientInterceptor
-public class ClientAuthInterceptor implements ClientExecutionInterceptor {
+public class ClientAuthInterceptor implements ClientRequestFilter {
 
 	String hostName = null;
 	CasHmacRestProvider<?> provider = null;
 	
-	@SuppressWarnings("rawtypes")
-	public ClientResponse execute(ClientExecutionContext context) throws Exception {
-		
-		HMACUtils.createSignatureAndSignRequest(context.getRequest(), hostName, provider.getClientId(), provider.getSecret());
-
-		return context.proceed();
+	@Override
+	public void filter(ClientRequestContext context) throws IOException {
+		try {
+			HMACUtils.createSignatureAndSignRequest(context, hostName, provider.getClientId(), provider.getSecret());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void setProvider(CasHmacRestProvider<?> provider) {

@@ -3,15 +3,17 @@ package edu.swmed.qbrc.auth.cashmac.shared.util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SignatureException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.container.ContainerRequestContext;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.client.ClientRequest;
-import org.jboss.resteasy.spi.HttpRequest;
 
 public class HMACUtils {
  
@@ -25,20 +27,20 @@ public class HMACUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static void createSignatureAndSignRequest(ClientRequest request, String host, String clientId, String secret) throws Exception {
+	public static void createSignatureAndSignRequest(ClientRequestContext context, String host, String clientId, String secret) throws Exception {
 		// Get current date
 		String currentDate = Long.toString(System.currentTimeMillis());
 
 		// Get string to sign with HMAC
-		String toSign = createSignature(request, currentDate, host);
+		String toSign = createSignature(context, currentDate);
 		
 		// Get HMAC
 		String signature = calculateRFC2104HMAC(toSign, secret);
 		
 		// Add headers to request
-		request.header("Signature", signature);
-		request.header("ClientId", clientId);
-		request.header("Date", currentDate);
+		context.getHeaders().add("Signature", signature);
+		context.getHeaders().add("ClientId", clientId);
+		context.getHeaders().add("Date", currentDate);
 	}
 	
 	/**
@@ -48,23 +50,27 @@ public class HMACUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String createSignature(ClientRequest request, String date, String host) throws Exception {
+	public static String createSignature(ContainerRequestContext context, String date) throws Exception {
 		StringBuilder s = new StringBuilder();
 		
 		// HTTP Verb
-		s.append(request.getHttpMethod()).append("\n");
+		s.append(context.getRequest().getMethod()).append("\n");
 		
 		// Host header
+		String host = context.getHeaders().getFirst("HOST");
+		if (host == null) {
+			host = "/";
+		}
 		s.append(host.toLowerCase()).append("\n");
 		
 		// URI
-		s.append(baseUriOnly(request.getUri())).append("\n");
+		s.append(baseUriOnly(context.getUriInfo().getPath())).append("\n");
 
 		// Date
 		s.append(date).append("\n");
 
 		// Query String
-		s.append(buildSortedQueryString(request));
+		s.append(buildSortedQueryString(context));
 
 		log.trace("HMAC to Sign: " + s.toString());
 		
@@ -125,27 +131,27 @@ public class HMACUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String createSignature(HttpRequest request, String date) throws Exception {
+	public static String createSignature(ClientRequestContext context, String date) throws Exception {
 		StringBuilder s = new StringBuilder();
 		
 		// HTTP Verb
-		s.append(request.getHttpMethod()).append("\n");
+		s.append(context.getMethod()).append("\n");
 		
 		// Host header
-		String host = request.getHttpHeaders().getRequestHeaders().getFirst("HOST");
+		String host = context.getHeaderString("HOST");
 		if (host == null) {
 			host = "/";
 		}
 		s.append(host.toLowerCase()).append("\n");
 		
 		// URI
-		s.append(request.getUri().getAbsolutePath().toASCIIString()).append("\n");
+		s.append(context.getUri().getPath()).append("\n");
 
 		// Date
 		s.append(date).append("\n");
 
 		// Query String
-		s.append(buildSortedQueryString(request));
+		s.append(buildSortedQueryString(context));
 
 		log.trace("HMAC to Sign: " + s.toString());
 
@@ -160,12 +166,12 @@ public class HMACUtils {
 	 * @return
 	 * @throws URISyntaxException
 	 */
-	private static String buildSortedQueryString(ClientRequest request) throws URISyntaxException {
+	private static String buildSortedQueryString(ContainerRequestContext context) throws URISyntaxException {
 		StringBuilder s = new StringBuilder();
 		
 		// Sort by adding all items to a TreeMap
 		TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-		for (Entry<String, List<String>> param : request.getQueryParameters().entrySet()) {
+		for (Entry<String, List<String>> param : context.getUriInfo().getQueryParameters().entrySet()) {
 			String key = param.getKey();
 			String value = param.getValue().iterator().next();
 			sortedMap.put(encode(key), encode(value));
@@ -214,14 +220,15 @@ public class HMACUtils {
 	 * @return
 	 * @throws URISyntaxException
 	 */
-	private static String buildSortedQueryString(HttpRequest request) throws URISyntaxException {
+	private static String buildSortedQueryString(ClientRequestContext context) throws URISyntaxException {
 		StringBuilder s = new StringBuilder();
 		
 		// Sort by adding all items to a TreeMap
 		TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-		for (Entry<String, List<String>> param : request.getUri().getQueryParameters().entrySet()) {
+		Map<String, String> queryParams = getQueryMap(context.getUri().getQuery());
+		for (Entry<String, String> param :  queryParams.entrySet()) {
 			String key = param.getKey();
-			String value = param.getValue().iterator().next();
+			String value = param.getValue();
 			sortedMap.put(encode(key), encode(value));
 		}
 		
@@ -232,6 +239,20 @@ public class HMACUtils {
 		
 		return s.toString();
 	}	
+	
+	
+	public static Map<String, String> getQueryMap(String query)  
+	{  
+	    String[] params = query.split("&");  
+	    Map<String, String> map = new HashMap<String, String>();  
+	    for (String param : params)  
+	    {  
+	        String name = param.split("=")[0];  
+	        String value = param.split("=")[1];  
+	        map.put(name, value);  
+	    }  
+	    return map;  
+	}  
 
 	/**
 	 * URL encoding for a string
