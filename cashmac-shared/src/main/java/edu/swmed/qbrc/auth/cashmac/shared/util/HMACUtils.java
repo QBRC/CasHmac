@@ -57,10 +57,7 @@ public class HMACUtils {
 		s.append(context.getRequest().getMethod()).append("\n");
 		
 		// Host header
-		String host = context.getHeaders().getFirst("HOST");
-		if (host == null) {
-			host = "/";
-		}
+		String host = context.getUriInfo().getRequestUri().getHost() + ":" + context.getUriInfo().getRequestUri().getPort();
 		s.append(host.toLowerCase()).append("\n");
 		
 		// URI
@@ -95,42 +92,6 @@ public class HMACUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	/*
-	public static String createSignature(ContainerRequestContext request, String date) throws Exception {
-		StringBuilder s = new StringBuilder();
-		
-		// HTTP Verb
-		s.append(request.getMethod()).append("\n");
-		
-		// Host header
-		String host = request.getHeaders().getFirst("HOST");
-		if (host == null) {
-			host = "/";
-		}
-		s.append(host.toLowerCase()).append("\n");
-		
-		// URI
-		s.append(request.getUriInfo().getAbsolutePath().toASCIIString()).append("\n");
-
-		// Date
-		s.append(date).append("\n");
-
-		// Query String
-		s.append(buildSortedQueryString(request));
-
-		//log.trace("HMAC to Sign: " + s.toString());
-
-		// Return value
-		return s.toString();
-	}*/
-	
-	/**
-	 * Creates the signature to be passed to the HMAC function.
-	 * @param request
-	 * @param date
-	 * @return
-	 * @throws Exception
-	 */
 	public static String createSignature(ClientRequestContext context, String date) throws Exception {
 		StringBuilder s = new StringBuilder();
 		
@@ -138,10 +99,7 @@ public class HMACUtils {
 		s.append(context.getMethod()).append("\n");
 		
 		// Host header
-		String host = context.getHeaderString("HOST");
-		if (host == null) {
-			host = "/";
-		}
+		String host = context.getUri().getHost() + ":" + context.getUri().getPort();
 		s.append(host.toLowerCase()).append("\n");
 		
 		// URI
@@ -185,34 +143,6 @@ public class HMACUtils {
 		return s.toString();
 	}
 
-	
-	/**
-	 * Sorts the query string parameters, URL encodes them, and joins them in
-	 * '&' delimited, '=' separated name/value pairs.
-	 * @param request
-	 * @return
-	 * @throws URISyntaxException
-	 */
-	/*
-	private static String buildSortedQueryString(ContainerRequestContext request) throws URISyntaxException {
-		StringBuilder s = new StringBuilder();
-		
-		// Sort by adding all items to a TreeMap
-		TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-		for (Entry<String, List<String>> param : request.getUriInfo().getQueryParameters().entrySet()) {
-			String key = param.getKey();
-			String value = param.getValue().iterator().next();
-			sortedMap.put(encode(key), encode(value));
-		}
-		
-		// Create name=value pairs.
-		for (String key : sortedMap.keySet()) {
-			s.append((s.length() > 0) ? "&" : "").append(key).append("=").append(sortedMap.get(key));
-		}
-		
-		return s.toString();
-	}	*/
-
 	/**
 	 * Sorts the query string parameters, URL encodes them, and joins them in
 	 * '&' delimited, '=' separated name/value pairs.
@@ -224,17 +154,19 @@ public class HMACUtils {
 		StringBuilder s = new StringBuilder();
 		
 		// Sort by adding all items to a TreeMap
-		TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-		Map<String, String> queryParams = getQueryMap(context.getUri().getQuery());
-		for (Entry<String, String> param :  queryParams.entrySet()) {
-			String key = param.getKey();
-			String value = param.getValue();
-			sortedMap.put(encode(key), encode(value));
-		}
-		
-		// Create name=value pairs.
-		for (String key : sortedMap.keySet()) {
-			s.append((s.length() > 0) ? "&" : "").append(key).append("=").append(sortedMap.get(key));
+		if (context.getUri().getRawQuery() != null) {
+			TreeMap<String, String> sortedMap = new TreeMap<String, String>();
+			Map<String, String> queryParams = getQueryMap(context.getUri().getRawQuery());
+			for (Entry<String, String> param : queryParams.entrySet()) {
+				String key = param.getKey();
+				String value = param.getValue();
+				sortedMap.put(encode(key), encode(value));
+			}
+			
+			// Create name=value pairs.
+			for (String key : sortedMap.keySet()) {
+				s.append((s.length() > 0) ? "&" : "").append(key).append("=").append(sortedMap.get(key));
+			}
 		}
 		
 		return s.toString();
@@ -243,6 +175,7 @@ public class HMACUtils {
 	
 	public static Map<String, String> getQueryMap(String query)  
 	{  
+		query = query.replace("+", " ");
 	    String[] params = query.split("&");  
 	    Map<String, String> map = new HashMap<String, String>();  
 	    for (String param : params)  

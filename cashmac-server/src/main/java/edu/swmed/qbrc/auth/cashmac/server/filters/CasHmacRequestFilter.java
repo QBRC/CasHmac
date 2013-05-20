@@ -12,11 +12,13 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public class CasHmacRequestFilter implements Filter {
 
 	private static ThreadLocal<HttpServletRequest> localRequest = new ThreadLocal<HttpServletRequest>();
+	private static ThreadLocal<HttpServletResponse> localResponse = new ThreadLocal<HttpServletResponse>();
 	private static Map<String, String> servletConfig = new HashMap<String, String>();
 	
 	public static Map<String, String> getConfig() {
@@ -25,6 +27,10 @@ public class CasHmacRequestFilter implements Filter {
 	
 	public static HttpServletRequest getRequest() {
 		return localRequest.get();
+	}
+	
+	public static HttpServletResponse getResponse() {
+		return localResponse.get();
 	}
 	
 	public static HttpSession getSession() {
@@ -36,6 +42,9 @@ public class CasHmacRequestFilter implements Filter {
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 		if (servletRequest instanceof HttpServletRequest) {
 			localRequest.set((HttpServletRequest) servletRequest);
+		}
+		if (servletResponse instanceof HttpServletResponse) {
+			localResponse.set((HttpServletResponse) servletResponse);
 		}
 		
 		try {

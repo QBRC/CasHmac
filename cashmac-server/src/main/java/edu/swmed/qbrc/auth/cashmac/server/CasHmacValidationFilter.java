@@ -89,7 +89,9 @@ public class CasHmacValidationFilter implements ContainerRequestFilter {
 						if (hmac.equals(hmacSignature)) {
 
 							// Check to see if the user has the role (allow any authenticated user if no role specified).
+							CasHmacRequestFilter.getRequest().setAttribute("user", user);
 							context.setSecurityContext(new CasHmacSecurityContext(user));
+							
 							return;
 							
 						} else {
@@ -119,8 +121,8 @@ public class CasHmacValidationFilter implements ContainerRequestFilter {
 				return;
 			}
 	
-			final String serviceUrl = CommonUtils.constructServiceUrl((HttpServletRequest)context.getRequest(), null, null, this.serverName, TICKET_PARAM_NAME, true);
-			final String ticket = CommonUtils.safeGetParameter((HttpServletRequest)context.getRequest(), TICKET_PARAM_NAME);
+			final String serviceUrl = CommonUtils.constructServiceUrl(CasHmacRequestFilter.getRequest(), CasHmacRequestFilter.getResponse(), null, this.serverName, TICKET_PARAM_NAME, true);
+			final String ticket = CommonUtils.safeGetParameter(CasHmacRequestFilter.getRequest(), TICKET_PARAM_NAME);
 	
 			if (CommonUtils.isNotBlank(ticket)) {
 			    return;
