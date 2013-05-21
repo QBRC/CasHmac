@@ -36,6 +36,7 @@ public class HMACUtils {
 		
 		// Get HMAC
 		String signature = calculateRFC2104HMAC(toSign, secret);
+		log.trace("HMAC to Sign on Client Filter:\n" + toSign);
 		
 		// Add headers to request
 		context.getHeaders().add("Signature", signature);
@@ -154,9 +155,9 @@ public class HMACUtils {
 		StringBuilder s = new StringBuilder();
 		
 		// Sort by adding all items to a TreeMap
-		if (context.getUri().getRawQuery() != null) {
+		if (context.getUri().getQuery() != null) {
 			TreeMap<String, String> sortedMap = new TreeMap<String, String>();
-			Map<String, String> queryParams = getQueryMap(context.getUri().getRawQuery());
+			Map<String, String> queryParams = getQueryMap(context.getUri().getQuery());
 			for (Entry<String, String> param : queryParams.entrySet()) {
 				String key = param.getKey();
 				String value = param.getValue();
@@ -176,7 +177,7 @@ public class HMACUtils {
 	public static Map<String, String> getQueryMap(String query)  
 	{  
 		query = query.replace("+", " ");
-	    String[] params = query.split("&");  
+		String[] params = query.split("&");  
 	    Map<String, String> map = new HashMap<String, String>();  
 	    for (String param : params)  
 	    {  
