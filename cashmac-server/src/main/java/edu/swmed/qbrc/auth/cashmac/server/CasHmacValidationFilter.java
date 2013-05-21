@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import javax.annotation.Priority;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -16,6 +17,7 @@ import org.apache.log4j.Logger;
 import org.jasig.cas.client.util.AbstractCasFilter;
 import org.jasig.cas.client.util.CommonUtils;
 import org.jasig.cas.client.validation.Assertion;
+import org.jboss.resteasy.core.interception.PostMatchContainerRequestContext;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.dao.UserDao;
@@ -23,8 +25,17 @@ import edu.swmed.qbrc.auth.cashmac.server.data.User;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 import edu.swmed.qbrc.auth.cashmac.server.guice.GuiceModule;
 import edu.swmed.qbrc.auth.cashmac.server.guice.MainGuiceModule;
+import edu.swmed.qbrc.auth.cashmac.shared.annotations.NoCasAuth;
 import edu.swmed.qbrc.auth.cashmac.shared.util.HMACUtils;
 
+/**
+ * This is the default HMAC/CAS validation filter.  If the @NoCasAuth annotation is
+ * applied to a resource method, then the CasHmacValidationFilterNoCas takes priority
+ * and CAS is not allowed.  This filter, however, allows both CAS and HMAC authentication.
+ * @author JYODE1
+ *
+ */
+@Priority(0)
 public class CasHmacValidationFilter implements ContainerRequestFilter {
 
 	@Context
@@ -108,8 +119,9 @@ public class CasHmacValidationFilter implements ContainerRequestFilter {
 			}
 		}
 		
-		// Don't allow CAS if the "@NoCasAuth" annotation is present on the RESTful method.
-		//if (!resourceMethod.getMethod().isAnnotationPresent(NoCasAuth.class)) {
+		// Search for @NoCasAuth annotation on resource method.
+		PostMatchContainerRequestContext ctx = (PostMatchContainerRequestContext)context;
+		if (! ctx.getResourceMethod().getMethod().isAnnotationPresent(NoCasAuth.class)) {
 		
 			// Get context parameters for CAS server login URL and service URL
 			casServerLoginUrl = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serverLoginUrl");
@@ -136,13 +148,12 @@ public class CasHmacValidationFilter implements ContainerRequestFilter {
 			} catch (URISyntaxException e) {
 				context.abortWith(Response.status(Status.FORBIDDEN).entity("Invalid CAS Login URL: " + urlToRedirectTo).build());
 			}
-		//}
+		}
 		
-		// Unable to authenticate with HMAC or CAS, but authentication is required, so throw an error.
-		//else {
-		//	context.abortWith(Response.status(Status.FORBIDDEN).entity("No HMAC authentication information was supplied, and CAS authentication is prohibited for this method.").build());
-		//}
-	
+		else {
+			// Don't allow CAS if the "@NoCasAuth" annotation is present on the RESTful method.
+			context.abortWith(Response.status(Status.FORBIDDEN).entity("No HMAC authentication information was supplied, and CAS authentication is prohibited for this method.").build());
+		}
 	}
 
 }
