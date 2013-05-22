@@ -8,19 +8,16 @@ public class Role implements BaseEntity {
 	private static final long serialVersionUID = 4809021141402641492L;
 	
 	private Integer id;
-	private String username;
     private String role;
     
     public Role() {
         id = 0;
-        username = "";
         role = "";
     }
 
-    public Role(Integer id, String username, String role) {
+    public Role(Integer id, String role) {
 		super();
 		this.id = id;
-		this.username = username;
 		this.role = role;
 	}
 
@@ -33,15 +30,7 @@ public class Role implements BaseEntity {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
-    }
-    
-    public void setUsername(String username) {
-    	this.username = username;
-    }
-
-    
+   
     public String getRole() {
     	return this.role;
     }
@@ -52,7 +41,7 @@ public class Role implements BaseEntity {
     
 	@Override
 	public String toString() {
-		return "Role [id=" + id + ", username=" + username + ", role=" + role + "]";
+		return "Role [id=" + id + ", role=" + role + "]";
 	}
     
 }

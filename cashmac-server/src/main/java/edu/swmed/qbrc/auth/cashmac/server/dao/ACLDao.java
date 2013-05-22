@@ -9,19 +9,18 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.log4j.Logger;
-
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
 import edu.swmed.qbrc.auth.cashmac.server.data.ACL;
-import edu.swmed.qbrc.auth.cashmac.server.data.Role;
+import edu.swmed.qbrc.auth.cashmac.server.data.RoleUser;
 
 public class ACLDao extends BaseDao<ACL> {
 
 	private static final Logger log = Logger.getLogger(ACLDao.class);
 	
-	private final String roletable;
+	private final String roleuserstable;
+	private final String roleIdCol;
 	private final String roleUsernameCol;
-	private final String roleKeyCol;
 	private final String table;
 	private final String keycol;
 	private final String usernameCol;
@@ -34,18 +33,19 @@ public class ACLDao extends BaseDao<ACL> {
 	public ACLDao(final Map<String, String> servletConfig, final BasicDataSource dataSource) {
 		super(ACL.class, servletConfig, dataSource);
 
-		// Get Context Parameters for Role table
-    	String roletable = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.Role");
-    	if (roletable == null || roletable.equals("")) {
-    		roletable = ((TableName)Role.class.getAnnotation(TableName.class)).value();
+
+		// Get Context Parameters for Role Users table
+    	String roleuserstable = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.RoleUsers");
+    	if (roleuserstable == null || roleuserstable.equals("")) {
+    		roleuserstable = ((TableName)RoleUser.class.getAnnotation(TableName.class)).value();
     	}
-    	String roleUsernameCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.usercol.Role");
+    	String roleIdCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.roleid.RoleUsers");
+    	if (roleIdCol == null || roleIdCol.equals("")) {
+    		roleIdCol = "roleid";
+    	}
+    	String roleUsernameCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.username.RoleUsers");
     	if (roleUsernameCol == null || roleUsernameCol.equals("")) {
     		roleUsernameCol = "username";
-    	}
-    	String roleKeyCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.Role");
-    	if (roleKeyCol == null || roleKeyCol.equals("")) {
-    		roleKeyCol = "id";
     	}
 
 		
@@ -80,9 +80,9 @@ public class ACLDao extends BaseDao<ACL> {
     	}
 
     	// Initialize fields with properties from .properties file.
-    	this.roletable = roletable;
     	this.roleUsernameCol = roleUsernameCol;
-    	this.roleKeyCol = roleKeyCol;
+    	this.roleuserstable = roleuserstable;
+    	this.roleIdCol = roleIdCol;
     	this.table = table;
     	this.keycol = keycol;
     	this.usernameCol = usernameCol;
@@ -166,7 +166,7 @@ public class ACLDao extends BaseDao<ACL> {
             			"( 1=0 " +
             				"OR " + usernameCol + " = ? " +
             				"OR " + roleCol     + " IN ( " +
-            					"SELECT " + roleKeyCol + " FROM " + roletable + " " +
+            					"SELECT " + roleIdCol + " FROM " + roleuserstable + " " +
             					"WHERE " + roleUsernameCol + " = ? " + 
             				") " +
             			") " +
