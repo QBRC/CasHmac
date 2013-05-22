@@ -11,12 +11,13 @@ import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
+import edu.swmed.qbrc.auth.cashmac.server.data.RoleUser;
 
-public class RoleDao extends BaseDao<Role> {
+public class RoleUserDao extends BaseDao<RoleUser> {
 	
 	@Inject
-	public RoleDao(final Map<String, String> servletConfig, final BasicDataSource dataSource) {
-		super(Role.class, servletConfig, dataSource);
+	public RoleUserDao(final Map<String, String> servletConfig, final BasicDataSource dataSource) {
+		super(RoleUser.class, servletConfig, dataSource);
     }
 
     /* Load a role */
@@ -124,7 +125,7 @@ public class RoleDao extends BaseDao<Role> {
     }    
 
     @Override
-	public Role setData(ResultSet results) throws SQLException {
+	public RoleUser setData(ResultSet results) throws SQLException {
 
         // Get Context Parameters for Role table information
     	String keycol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.Role");
@@ -137,7 +138,7 @@ public class RoleDao extends BaseDao<Role> {
     	}
 
 		
-		Role toReturn = new Role();
+    	RoleUser toReturn = new RoleUser();
 		toReturn.setId(results.getInt(keycol));
 		toReturn.setRole(results.getString(roleCol));
 		return toReturn;
