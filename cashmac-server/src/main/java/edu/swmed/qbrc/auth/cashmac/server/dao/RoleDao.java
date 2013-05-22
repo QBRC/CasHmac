@@ -11,6 +11,7 @@ import org.apache.commons.dbcp.BasicDataSource;
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
 import edu.swmed.qbrc.auth.cashmac.server.data.Role;
+import edu.swmed.qbrc.auth.cashmac.server.data.RoleUser;
 
 public class RoleDao extends BaseDao<Role> {
 	
@@ -32,6 +33,23 @@ public class RoleDao extends BaseDao<Role> {
     	if (table == null || table.equals("")) {
             table = ((TableName)Role.class.getAnnotation(TableName.class)).value();
     	}
+        // Get Context Parameters for Role table information
+    	String tableMap = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.RoleUsers");
+    	if (tableMap == null || tableMap.equals("")) {
+    		tableMap = ((TableName)RoleUser.class.getAnnotation(TableName.class)).value();
+    	}
+    	String usernameCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.username.RoleUsers");
+    	if (usernameCol == null || usernameCol.equals("")) {
+    		usernameCol = "username";
+    	}
+    	String keycol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.keycol.Role");
+    	if (keycol == null || keycol.equals("")) {
+    		keycol = ((TableName)Role.class.getAnnotation(TableName.class)).keycol();
+    	}
+    	String roleidCol = servletConfig.get("edu.swmed.qbrc.auth.cashmac.hmac.table.roleid.RoleUsers");
+    	if (roleidCol == null || roleidCol.equals("")) {
+    		roleidCol = "roleid";
+    	}
 
         try {
 
@@ -39,7 +57,12 @@ public class RoleDao extends BaseDao<Role> {
             conn = dataSource.getConnection();
 
             // Prepare query
-            stmt = conn.prepareStatement("select * from " + table + " where " + usernameCol + " = ?");
+            stmt = conn.prepareStatement(
+            		"select r.* from " + table + " r " +
+            			"inner join " + tableMap + " ru " +
+            			"on r." + keycol + " = ru." + roleidCol + " " + 
+            		"where ru." + usernameCol + " = ?"
+            );
             stmt.setString(1, username);
 
             // Execute query

@@ -1,5 +1,8 @@
 package edu.swmed.qbrc.auth.cashmac.server.data;
 
+import edu.swmed.qbrc.auth.cashmac.server.dao.annotations.TableName;
+
+@TableName(value="roleusers", keycol="roleId")
 public class RoleUser implements BaseEntity {
 	
 	private static final long serialVersionUID = -5978888156116920819L;
