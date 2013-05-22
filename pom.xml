@@ -19,6 +19,7 @@
 		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
 		<maven-deploy-plugin.version>2.7</maven-deploy-plugin.version>
         <maven-war-plugin.version>2.2</maven-war-plugin.version>
+        <target.jdk>1.6</target.jdk>
 
         <cas.version>3.2.1</cas.version>
         <resteasy.version>3.0-beta-5</resteasy.version>

@@ -156,7 +156,7 @@ public class CrudAclSearch {
 
 		// Return true by default (unless we found unfulfilled ACLs)
 		Boolean returnValue = true;
-
+		
 		// Load entity, if necessary
 		if (this.entityManagerAnnotation != null && needsEntityLoad(entity)) {
 			EntityManager em = this.crudAclSearchFactory.getEntityManager(this.entityManagerAnnotation);
@@ -164,7 +164,8 @@ public class CrudAclSearch {
 				entity = em.find(entity.getClass(), id);
 				log.trace("============= Loaded entity of class " + entity.getClass().getSimpleName() + " with id " + id.toString());
 			} catch (Exception e) {
-				log.trace("============= Unable to load entity " + entity.getClass().getSimpleName() + " with id " + id.toString());
+				if (entity != null)
+					log.trace("============= Unable to load entity " + entity.getClass().getSimpleName() + " with id " + id);
 				log.trace("Error:\n" + e.getMessage());
 				return false;
 			}
