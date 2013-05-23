@@ -1,9 +1,11 @@
 package edu.swmed.qbrc.auth.cashmac.server.acl;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import javax.persistence.EntityManager;
 import org.apache.log4j.Logger;
+import edu.swmed.qbrc.auth.cashmac.server.acl.utils.NoInterceptionWrapper;
 import edu.swmed.qbrc.auth.cashmac.shared.annotations.*;
 import edu.swmed.qbrc.auth.cashmac.shared.constants.CasHmacAccessLevels;
 
@@ -161,7 +163,7 @@ public class CrudAclSearch {
 		if (this.entityManagerAnnotation != null && needsEntityLoad(entity)) {
 			EntityManager em = this.crudAclSearchFactory.getEntityManager(this.entityManagerAnnotation);
 			try {
-				entity = em.find(entity.getClass(), id);
+				entity = em.find(entity.getClass(), new NoInterceptionWrapper((Serializable)id));
 				log.trace("============= Loaded entity of class " + entity.getClass().getSimpleName() + " with id " + id.toString());
 			} catch (Exception e) {
 				if (entity != null)

@@ -9,6 +9,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import edu.swmed.qbrc.auth.cashmac.server.acl.CrudAclSearch;
 import edu.swmed.qbrc.auth.cashmac.server.acl.CrudAclSearchFactory;
+import edu.swmed.qbrc.auth.cashmac.server.acl.utils.NoInterceptionWrapper;
 import edu.swmed.qbrc.auth.cashmac.server.dao.UserDao;
 import edu.swmed.qbrc.auth.cashmac.server.filters.CasHmacRequestFilter;
 import edu.swmed.qbrc.auth.cashmac.server.guice.GuiceModule;
@@ -61,6 +62,13 @@ public class CasHmacInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public boolean onLoad(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
+		/* If id object is wrapped with NoInterceptionWrapper, continue. */
+		if (id instanceof NoInterceptionWrapper) {
+			log.trace("Skip Read: " + entity.getClass().getName() + " was wrapped with NoInterceptionWrapper class.");
+			return super.onLoad(entity, id, state, propertyNames, types);
+		}
+		
+		/* Otherwise, check for ACLs */
 		log.trace("Read: " + entity.getClass().getName() + "\nFrom Session: " + CasHmacRequestFilter.getSession().getId() + "\nNumber of Properties: " + propertyNames.length);
 		CrudAclSearch acl = crudAclSearchFactory.find(entity, id, CasHmacAccessLevels.READ, state, null, propertyNames);
 		if (acl.getHasNeccessaryAcl()) {
