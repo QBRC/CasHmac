@@ -1,7 +1,6 @@
 package edu.swmed.qbrc.auth.cashmac.server.hibernate.interceptors;
 
 import java.io.Serializable;
-
 import org.apache.log4j.Logger;
 import org.hibernate.EmptyInterceptor;
 import org.hibernate.type.Type;
@@ -56,6 +55,7 @@ public class CasHmacInterceptor extends EmptyInterceptor {
 		}
 	}
 
+	
 	/**
 	 * Before an entity is LOADED.
 	 */
