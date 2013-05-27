@@ -158,11 +158,13 @@ public class CrudAclSearch {
 			EntityManager em = this.crudAclSearchFactory.getEntityManager(this.entityManagerAnnotation);
 			try {
 				entity = em.find(entity.getClass(), id);
-				log.trace("============= Loaded entity of class " + entity.getClass().getSimpleName() + " with id " + id.toString());
+				if (entity != null)
+					log.trace("============= Loaded entity of class " + entity.getClass().getSimpleName() + " with id " + id.toString());
 			} catch (Exception e) {
 				if (entity != null)
 					log.trace("============= Unable to load entity " + entity.getClass().getSimpleName() + " with id " + id);
 				log.trace("Error:\n" + e.getMessage());
+				e.printStackTrace();
 				return false;
 			}
 		}
