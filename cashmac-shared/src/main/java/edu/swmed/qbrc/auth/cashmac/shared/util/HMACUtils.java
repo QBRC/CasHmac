@@ -36,7 +36,7 @@ public class HMACUtils {
 		
 		// Get HMAC
 		String signature = calculateRFC2104HMAC(toSign, secret);
-		log.trace("HMAC to Sign on Client Filter:\n" + toSign);
+		System.out.println("HMAC to Sign on Client Filter:\n" + toSign);
 		
 		// Add headers to request
 		context.getHeaders().add("Signature", signature);
@@ -62,7 +62,9 @@ public class HMACUtils {
 		s.append(host.toLowerCase()).append("\n");
 		
 		// URI
-		s.append(baseUriOnly(context.getUriInfo().getPath())).append("\n");
+		String baseUri = context.getUriInfo().getBaseUri().getPath();
+		baseUri = baseUri.equals("/") ? "" : baseUri;
+		s.append(baseUri + baseUriOnly(context.getUriInfo().getPath())).append("\n");
 
 		// Date
 		s.append(date).append("\n");
