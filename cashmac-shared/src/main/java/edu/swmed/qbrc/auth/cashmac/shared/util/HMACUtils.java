@@ -180,10 +180,15 @@ public class HMACUtils {
 		String[] params = query.split("&");  
 	    Map<String, String> map = new HashMap<String, String>();  
 	    for (String param : params)  
-	    {  
-	        String name = param.split("=")[0];  
-	        String value = param.split("=")[1];  
-	        map.put(name, value);  
+	    {
+	    	String[] nameValue = param.split("=");
+	    	if (nameValue.length == 2) {
+		        String name = nameValue[0];  
+		        String value = nameValue[1];
+		        map.put(name, value);
+	    	} else if (nameValue.length == 1) {
+	    		map.put(nameValue[0], null);
+	    	}
 	    }  
 	    return map;  
 	}  
