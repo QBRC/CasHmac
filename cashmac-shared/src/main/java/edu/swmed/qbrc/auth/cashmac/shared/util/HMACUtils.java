@@ -63,6 +63,10 @@ public class HMACUtils {
 		
 		// URI
 		String baseUri = context.getUriInfo().getBaseUri().getPath();
+		// Remove trailing slash
+		if (baseUri.endsWith("/")) {
+			baseUri = baseUri.substring(0, baseUri.length() -1);
+		}
 		baseUri = baseUri.equals("/") ? "" : baseUri;
 		s.append(baseUri + baseUriOnly(context.getUriInfo().getPath())).append("\n");
 
