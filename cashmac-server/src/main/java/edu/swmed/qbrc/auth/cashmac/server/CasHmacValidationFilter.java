@@ -1,11 +1,11 @@
 package edu.swmed.qbrc.auth.cashmac.server;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import javax.annotation.Priority;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -50,9 +50,10 @@ public class CasHmacValidationFilter implements ContainerRequestFilter {
 	private boolean isInjected = false;
 
 	private static final Logger log = Logger.getLogger(CasHmacValidationFilter.class);
-	private static final String TICKET_PARAM_NAME = "ticket";
-	private static final String SERVICE_PARAM_NAME = "service";
-
+	//private static final String TICKET_PARAM_NAME = "ticket";
+	//private static final String SERVICE_PARAM_NAME = "service";
+	private static final String TICKET_PARAM_NAME = "SAMLart";
+	private static final String SERVICE_PARAM_NAME = "TARGET";
 	
 	@Override
 	public void filter(ContainerRequestContext context) throws IOException {
@@ -126,23 +127,33 @@ public class CasHmacValidationFilter implements ContainerRequestFilter {
 			// Get context parameters for CAS server login URL and service URL
 			casServerLoginUrl = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serverLoginUrl");
 			serverName = CasHmacRequestFilter.getConfig().get("edu.swmed.qbrc.auth.cashmac.cas.serviceName");
-	
+
 			final HttpSession session = CasHmacRequestFilter.getSession();
 			final Assertion assertion = session != null ? (Assertion) session.getAttribute(AbstractCasFilter.CONST_CAS_ASSERTION) : null;
-			if (assertion != null) {
+			if (assertion != null && assertion.getPrincipal() != null) {
+				log.trace("Assertion Principal: " + assertion.getPrincipal().getName());
+
+				// Check to see if the user has the role (allow any authenticated user if no role specified).
+				CasHmacRequestFilter.getRequest().setAttribute("user", new User(assertion.getPrincipal().getName(), "", ""));
+				context.setSecurityContext(new CasHmacSecurityContextCAS(assertion.getPrincipal()));
+				
+				log.trace("Assertion Found. Allowing Request.");
 				return;
 			}
 	
-			final String serviceUrl = CommonUtils.constructServiceUrl(CasHmacRequestFilter.getRequest(), CasHmacRequestFilter.getResponse(), null, this.serverName, TICKET_PARAM_NAME, true);
+			// If we have a valid ticket, allow the user in.
+			/*
 			final String ticket = CommonUtils.safeGetParameter(CasHmacRequestFilter.getRequest(), TICKET_PARAM_NAME);
-	
 			if (CommonUtils.isNotBlank(ticket)) {
+				log.trace("Ticket Found. Allowing Request.");
 			    return;
 			}
-	
+			*/
+
+			// Redirect to CAS Login
+			final String serviceUrl = CommonUtils.constructServiceUrl(CasHmacRequestFilter.getRequest(), CasHmacRequestFilter.getResponse(), null, this.serverName, TICKET_PARAM_NAME, true);
 			final String modifiedServiceUrl = serviceUrl;
 			final String urlToRedirectTo = CommonUtils.constructRedirectUrl(this.casServerLoginUrl, SERVICE_PARAM_NAME, modifiedServiceUrl, false, false);
-	
 			try {
 				context.abortWith(Response.status(Status.TEMPORARY_REDIRECT).location(new URI(urlToRedirectTo)).build());
 			} catch (URISyntaxException e) {
