@@ -116,7 +116,7 @@ public class CasHmacValidation {
 					"  Access: " + access + "\n" +
 					"  Entity: " + pkValue + "\n" +
 					"  User:   " + user.getName() + "\n" +
-					"  Roles:  " + roleString + " ]\n" +
+					"  Roles:  [" + roleString + " ]\n" +
 					"-----------------------------------------------------------------\n" +
 					"\n");
 		

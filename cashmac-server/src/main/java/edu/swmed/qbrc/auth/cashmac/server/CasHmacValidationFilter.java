@@ -50,10 +50,10 @@ public class CasHmacValidationFilter implements ContainerRequestFilter {
 	private boolean isInjected = false;
 
 	private static final Logger log = Logger.getLogger(CasHmacValidationFilter.class);
-	//private static final String TICKET_PARAM_NAME = "ticket";
-	//private static final String SERVICE_PARAM_NAME = "service";
-	private static final String TICKET_PARAM_NAME = "SAMLart";
-	private static final String SERVICE_PARAM_NAME = "TARGET";
+	private static final String TICKET_PARAM_NAME = "ticket";
+	private static final String SERVICE_PARAM_NAME = "service";
+	//private static final String TICKET_PARAM_NAME = "SAMLart";
+	//private static final String SERVICE_PARAM_NAME = "TARGET";
 	
 	@Override
 	public void filter(ContainerRequestContext context) throws IOException {
