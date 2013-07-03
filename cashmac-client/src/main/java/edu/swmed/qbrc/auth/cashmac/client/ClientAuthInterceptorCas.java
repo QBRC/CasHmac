@@ -23,13 +23,12 @@ public class ClientAuthInterceptorCas implements ClientRequestFilter {
 			Assertion assertion = AssertionHolder.getAssertion();
 			String targetService = context.getUri().toASCIIString();
 			String proxyTicket = assertion.getPrincipal().getProxyTicketFor(targetService);
-			System.out.println("Got proxy ticket............................" + proxyTicket);
+			//System.out.println("Got proxy ticket............................" + proxyTicket);
 			
 			/* Create new URI with proxy ticket appended as a query parameter */
 			UriBuilder uriBuilder = UriBuilder.fromUri(context.getUri());
 			URI newUri = uriBuilder.queryParam("ticket", proxyTicket).build();
 			context.setUri(newUri);
-			//context.getHeaders().add("proxyTicket", proxyTicket);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
