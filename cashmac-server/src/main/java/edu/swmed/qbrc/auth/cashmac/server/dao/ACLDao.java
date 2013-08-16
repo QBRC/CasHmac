@@ -176,9 +176,10 @@ public class ACLDao extends BaseDao<ACL> {
             stmt = conn.prepareStatement(sqlstmt);
             
             stmt.setString(1, username);
-            stmt.setObject(2, username);
+            stmt.setString(2, username);
             stmt.setString(3, objectClass.getName());
-            stmt.setObject(4, key);
+           	//stmt.setObject(4, key);
+           	stmt.setString(4, key.toString());
             stmt.setString(5, accessLevel);
 
             // Execute query
@@ -191,6 +192,9 @@ public class ACLDao extends BaseDao<ACL> {
             }
 
         } catch (SQLException e) {
+        	System.out.println("------------------------------------------------");
+        	e.printStackTrace();
+        	System.out.println("------------------------------------------------");
             throw new RuntimeException("Database Error: " + e.getMessage());
         } catch(Exception e) {
             throw new RuntimeException("Exception: " + e.getMessage());
