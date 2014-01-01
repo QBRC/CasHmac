@@ -220,7 +220,7 @@ HMAC Signature
 
 - Start the string with the http method (probably GET), followed by a new line ("\n").
 - Append the host header in lower case, followed by a new line.
-- Append the URL-encoded request URI, followed by a new line (the URL minus any query string parameters; include the "http://").  If it's blank, use "/".  Do not URL encode any of the unreserved characters that RFC 3986 defines (reference: http://docs.aws.amazon.com/AmazonSimpleDB/latest/DeveloperGuide/HMACAuth.html)
+- Append the URL-encoded request URI, followed by a new line (the URL, starting with the "/" after the host name, minus any query string parameters).  If it's blank, use "/".  Do not URL encode any of the unreserved characters that RFC 3986 defines (reference: http://docs.aws.amazon.com/AmazonSimpleDB/latest/DeveloperGuide/HMACAuth.html)
 - Append the date in milliseconds (UTC), followed by a new line.  This date must exactly match the one included in the "Date" request header.
 - Append a sorted list of query string name=value pairs, each pair separated with "&".  Leave this blank if there are no parameters.
 - Encode the entire string with the HMAC-SHA1 algorithm.
@@ -239,30 +239,35 @@ Below is the Java code (taken from cashmac-shared's HMACUtils.java) used to add 
  * @return
  * @throws Exception
  */
-public static String createSignature(HttpRequest request, String date) throws Exception {
-	StringBuilder s = new StringBuilder();
-	
-	// HTTP Verb
-	s.append(request.getHttpMethod()).append("\n");
-	
-	// Host header
-	String host = request.getHttpHeaders().getRequestHeaders().getFirst("HOST");
-	if (host == null) {
-		host = "/";
-	}
-	s.append(host.toLowerCase()).append("\n");
-	
-	// URI
-	s.append(request.getUri().getAbsolutePath().toASCIIString()).append("\n");
+public static String createSignature(ContainerRequestContext context, String date) throws Exception {
+        StringBuilder s = new StringBuilder();
+        
+        // HTTP Verb
+        s.append(context.getRequest().getMethod()).append("\n");
+        
+        // Host header
+        String host = context.getUriInfo().getRequestUri().getHost() + ":" + context.getUriInfo().getRequestUri().getPort();
+        s.append(host.toLowerCase()).append("\n");
+        
+        // URI
+        String baseUri = context.getUriInfo().getBaseUri().getPath();
+        // Remove trailing slash
+        if (baseUri.endsWith("/")) {
+                baseUri = baseUri.substring(0, baseUri.length() -1);
+        }
+        baseUri = baseUri.equals("/") ? "" : baseUri;
+        s.append(baseUri + baseUriOnly(context.getUriInfo().getPath())).append("\n");
 
-	// Date
-	s.append(date).append("\n");
+        // Date
+        s.append(date).append("\n");
 
-	// Query String
-	s.append(buildSortedQueryString(request));
+        // Query String
+        s.append(buildSortedQueryString(context));
 
-	// Return value
-	return s.toString();
+        log.trace("HMAC to Sign: " + s.toString());
+        
+        // Return value
+        return s.toString();
 }
 
 /**
